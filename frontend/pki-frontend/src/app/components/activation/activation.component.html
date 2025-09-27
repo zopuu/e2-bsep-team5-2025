@@ -1,0 +1,37 @@
+<div class="activation-container">
+  <div class="activation-card">
+    <div class="icon" [class]="messageType">
+      <div *ngIf="isLoading" class="spinner"></div>
+      <div *ngIf="!isLoading && messageType === 'success'" class="success-icon">✓</div>
+      <div *ngIf="!isLoading && messageType === 'error'" class="error-icon">✗</div>
+    </div>
+
+    <h2 *ngIf="isLoading">Activating Account...</h2>
+    <h2 *ngIf="!isLoading && messageType === 'success'">Account Activated!</h2>
+    <h2 *ngIf="!isLoading && messageType === 'error'">Activation Failed</h2>
+
+    <p class="message" [class]="messageType">{{ message }}</p>
+
+    <div class="actions" *ngIf="!isLoading">
+      <button 
+        class="btn primary" 
+        *ngIf="messageType === 'success'"
+        (click)="goToLogin()"
+      >
+        Go to Login
+      </button>
+      
+      <button 
+        class="btn secondary" 
+        *ngIf="messageType === 'error'"
+        (click)="goToRegistration()"
+      >
+        Try Registration Again
+      </button>
+    </div>
+
+    <div class="redirect-info" *ngIf="messageType === 'success'">
+      <p>You will be redirected to the login page in a few seconds...</p>
+    </div>
+  </div>
+</div>

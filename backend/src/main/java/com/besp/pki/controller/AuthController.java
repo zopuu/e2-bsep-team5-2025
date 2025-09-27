@@ -1,0 +1,98 @@
+package com.besp.pki.controller;
+
+import com.besp.pki.dto.ApiResponse;
+import com.besp.pki.dto.RegistrationRequest;
+import com.besp.pki.service.PasswordValidationService;
+import com.besp.pki.service.UserService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+@RequestMapping("/auth")
+@CrossOrigin(origins = "${cors.allowed-origins}")
+public class AuthController {
+    
+    private final UserService userService;
+    private final PasswordValidationService passwordValidationService;
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
+    public AuthController(UserService userService, PasswordValidationService passwordValidationService) {
+        this.userService = userService;
+        this.passwordValidationService = passwordValidationService;
+    }
+    
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegistrationRequest request) {
+        try {
+            // Validate password confirmation
+            if (!request.getPassword().equals(request.getConfirmPassword())) {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Passwords do not match"));
+            }
+            
+            // Register user
+            userService.registerUser(
+                request.getEmail(),
+                request.getPassword(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getOrganization()
+            );
+            
+            return ResponseEntity.ok(ApiResponse.success(
+                "Registration successful! Please check your email to activate your account."
+            ));
+            
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Registration failed", e); // ispisuje ceo stack trace u konzoli
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error("Registration failed. Please try again."));
+        }
+    }
+    
+    @PostMapping("/activate")
+    public ResponseEntity<ApiResponse> activateAccount(@RequestParam String token) {
+        try {
+            boolean activated = userService.activateUser(token);
+            
+            if (activated) {
+                return ResponseEntity.ok(ApiResponse.success(
+                    "Account activated successfully! You can now log in."
+                ));
+            } else {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Invalid or expired activation token."));
+            }
+            
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Activation failed. Please try again."));
+        }
+    }
+    
+    @PostMapping("/validate-password")
+    public ResponseEntity<ApiResponse> validatePassword(@RequestBody String password) {
+        try {
+            PasswordValidationService.PasswordStrengthResult result = 
+                passwordValidationService.validatePassword(password);
+            
+            return ResponseEntity.ok(ApiResponse.success(
+                result.getMessage(),
+                result
+            ));
+            
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Password validation failed."));
+        }
+    }
+}
+
+

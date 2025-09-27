@@ -1,0 +1,136 @@
+<div class="registration-container">
+  <div class="registration-card">
+    <h2>Create Account</h2>
+    <p class="subtitle">Join the PKI System</p>
+
+    <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()" class="registration-form">
+      
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">Email Address *</label>
+        <input 
+          type="email" 
+          id="email" 
+          formControlName="email"
+          placeholder="Enter your email"
+          class="form-control"
+          [class.error]="getFieldError('email')"
+        >
+        <div class="error-message" *ngIf="getFieldError('email')">
+          {{ getFieldError('email') }}
+        </div>
+      </div>
+
+      <!-- First Name Field -->
+      <div class="form-group">
+        <label for="firstName">First Name *</label>
+        <input 
+          type="text" 
+          id="firstName" 
+          formControlName="firstName"
+          placeholder="Enter your first name"
+          class="form-control"
+          [class.error]="getFieldError('firstName')"
+        >
+        <div class="error-message" *ngIf="getFieldError('firstName')">
+          {{ getFieldError('firstName') }}
+        </div>
+      </div>
+
+      <!-- Last Name Field -->
+      <div class="form-group">
+        <label for="lastName">Last Name *</label>
+        <input 
+          type="text" 
+          id="lastName" 
+          formControlName="lastName"
+          placeholder="Enter your last name"
+          class="form-control"
+          [class.error]="getFieldError('lastName')"
+        >
+        <div class="error-message" *ngIf="getFieldError('lastName')">
+          {{ getFieldError('lastName') }}
+        </div>
+      </div>
+
+      <!-- Organization Field -->
+      <div class="form-group">
+        <label for="organization">Organization *</label>
+        <input 
+          type="text" 
+          id="organization" 
+          formControlName="organization"
+          placeholder="Enter your organization"
+          class="form-control"
+          [class.error]="getFieldError('organization')"
+        >
+        <div class="error-message" *ngIf="getFieldError('organization')">
+          {{ getFieldError('organization') }}
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">Password *</label>
+        <input 
+          type="password" 
+          id="password" 
+          formControlName="password"
+          placeholder="Enter your password"
+          class="form-control"
+          [class.error]="getFieldError('password')"
+          (input)="onPasswordChange()"
+        >
+        <div class="error-message" *ngIf="getFieldError('password')">
+          {{ getFieldError('password') }}
+        </div>
+        
+        <!-- Password Strength Indicator -->
+        <div class="password-strength" *ngIf="passwordStrength">
+          <div class="strength-bar">
+            <div class="strength-fill" [class]="getPasswordStrengthClass()"></div>
+          </div>
+          <div class="strength-text" [class]="getPasswordStrengthClass()">
+            {{ passwordStrength.strengthLevel }} - {{ passwordStrength.message }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm Password Field -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password *</label>
+        <input 
+          type="password" 
+          id="confirmPassword" 
+          formControlName="confirmPassword"
+          placeholder="Confirm your password"
+          class="form-control"
+          [class.error]="getFieldError('confirmPassword')"
+        >
+        <div class="error-message" *ngIf="getFieldError('confirmPassword')">
+          {{ getFieldError('confirmPassword') }}
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="submit-btn"
+        [disabled]="isLoading || !registrationForm.valid"
+      >
+        <span *ngIf="isLoading">Creating Account...</span>
+        <span *ngIf="!isLoading">Create Account</span>
+      </button>
+
+      <!-- Message Display -->
+      <div class="message" [class]="messageType" *ngIf="message">
+        {{ message }}
+      </div>
+
+    </form>
+
+    <div class="login-link">
+      <p>Already have an account? <a routerLink="/login">Sign in</a></p>
+    </div>
+  </div>
+</div>
