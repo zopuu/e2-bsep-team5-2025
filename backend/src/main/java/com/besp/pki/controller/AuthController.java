@@ -1,7 +1,11 @@
 package com.besp.pki.controller;
 
 import com.besp.pki.dto.ApiResponse;
+import com.besp.pki.entity.User;
 import com.besp.pki.dto.RegistrationRequest;
+import com.besp.pki.dto.LoginRequest;
+import com.besp.pki.dto.LoginResponse;
+import com.besp.pki.security.JwtUtil;
 import com.besp.pki.service.PasswordValidationService;
 import com.besp.pki.service.UserService;
 import jakarta.validation.Valid;
@@ -18,11 +22,13 @@ public class AuthController {
     
     private final UserService userService;
     private final PasswordValidationService passwordValidationService;
+    private final JwtUtil jwtUtil;
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    public AuthController(UserService userService, PasswordValidationService passwordValidationService) {
+    public AuthController(UserService userService, PasswordValidationService passwordValidationService, JwtUtil jwtUtil) {
         this.userService = userService;
         this.passwordValidationService = passwordValidationService;
+        this.jwtUtil = jwtUtil;
     }
     
     @PostMapping("/register")
@@ -57,6 +63,25 @@ public class AuthController {
         }
     }
     
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            return userService.findByEmail(request.getEmail())
+                .filter(User::isEnabled)
+                .map(user -> {
+                    if (!userService.passwordMatches(request.getPassword(), user.getPassword())) {
+                        return ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials"));
+                    }
+                    userService.updateLastLogin(user);
+                    String token = jwtUtil.generateToken(user.getEmail());
+                    return ResponseEntity.ok(new LoginResponse(token, "Login successful"));
+                })
+                .orElseGet(() -> ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials")));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Login failed. Please try again."));
+        }
+    }
+
     @PostMapping("/activate")
     public ResponseEntity<ApiResponse> activateAccount(@RequestParam String token) {
         try {
@@ -94,5 +119,8 @@ public class AuthController {
         }
     }
 }
+
+
+
 
 

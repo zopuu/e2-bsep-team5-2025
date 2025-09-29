@@ -127,6 +127,13 @@ public class UserService {
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
     }
+
+    public boolean passwordMatches(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
 }
+
+
+
 
 

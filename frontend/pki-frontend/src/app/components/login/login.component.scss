@@ -1,0 +1,30 @@
+.login-container {
+  max-width: 400px;
+  margin: 40px auto;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+}
+
+small {
+  color: #b00020;
+}
+
+.success {
+  color: #0a7a0a;
+}
+
+.error {
+  color: #b00020;
+}
+
+
+
