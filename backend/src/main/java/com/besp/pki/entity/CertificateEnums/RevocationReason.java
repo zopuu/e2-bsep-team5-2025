@@ -1,0 +1,14 @@
+package com.besp.pki.entity.CertificateEnums;
+
+public enum RevocationReason {
+    UNSPECIFIED,
+    KEY_COMPROMISED,
+    CA_COMPROMISED,
+    AFFILIATION_CHANGED,
+    SUPERSEDED,
+    CESSATION_OF_OPERATION,
+    CERTIFICATE_HOLD,
+    REMOVE_FROM_CRL,
+    PRIVILEGE_WITHDRAWN,
+    AA_COMPROMISED
+}
