@@ -5,12 +5,18 @@ import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.entity.CertificateEnums.RevocationReason;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Instant;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 @Table(name = "certificates",
         uniqueConstraints = {
             @UniqueConstraint(name= "uk_cert_serial", columnNames = "serial_number"),
@@ -22,8 +28,6 @@ import java.time.Instant;
             @Index(name = "ix_cert_owner", columnList = "owner_user_id"),
             @Index(name = "ix_cert_issuer", columnList = "issuer_id")
         })
-@NoArgsConstructor
-@AllArgsConstructor
 public class CertificateRecord {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
@@ -83,7 +87,7 @@ public class CertificateRecord {
     private Instant revocationDate;
 
     @Column(name = "keysotre_path",length = 1024)
-    private String keysotrePath;        // ex. ./data/keystores/root-uuid.p12
+    private String keystorePath;        // ex. ./data/keystores/root-uuid.p12
 
     @Column(name = "keystore_alias", length = 128)
     private String keystoreAlias;
@@ -96,10 +100,10 @@ public class CertificateRecord {
     private String certificatePem;
 
     @Lob
-    @Column(name = "sam_json")
+    @Column(name = "san_json")
     private String subjectAltNamesJson;     // ex. JSON array DNS/IP/URI
 
-    @Column(name = "crl_distrigution_point", length = 1024)
+    @Column(name = "crl_distribution_point", length = 1024)
     private String crlDistrigutionPoint;    // URL do CRL-a
 
     @Column(name = "ocsp_url", length = 1024)
