@@ -47,7 +47,7 @@ public class AdminCertificatesController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.valueOf("application/x-pem-file"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "atachment; filename=\"certificate-" + id + ".pem\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"certificate-" + id + ".pem\"")
                 .body(body);
     }
     @GetMapping("/certificates")

@@ -1,5 +1,6 @@
 F:\BSEP\e2-bsep-team5-2025\backend\src\main\java\com\besp\pki\service\EmailService.java
 F:\BSEP\e2-bsep-team5-2025\backend\src\main\java\com\besp\pki\repository\CertificateRecordRepository.java
+F:\BSEP\e2-bsep-team5-2025\backend\src\main\java\com\besp\pki\security\JwtAuthFilter.java
 F:\BSEP\e2-bsep-team5-2025\backend\src\main\java\com\besp\pki\entity\ActivationToken.java
 F:\BSEP\e2-bsep-team5-2025\backend\src\main\java\com\besp\pki\entity\User.java
 F:\BSEP\e2-bsep-team5-2025\backend\src\main\java\com\besp\pki\PkiApplication.java

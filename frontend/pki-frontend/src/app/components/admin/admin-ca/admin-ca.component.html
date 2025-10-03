@@ -1,0 +1,68 @@
+<div class="wrap">
+  <h1>Root CA tools</h1>
+  <p class="muted">Create a self-signed X.509 v3 Root CA (admin only).</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card">
+    <div class="grid">
+      <label>
+        <span>Common Name (CN) *</span>
+        <input formControlName="commonName" placeholder="Team5 Root CA" />
+        <small class="err" *ngIf="form.controls.commonName.touched && form.controls.commonName.invalid">
+          Required (max 128)
+        </small>
+      </label>
+
+      <label>
+        <span>Organization (O)</span>
+        <input formControlName="organization" placeholder="FTN" />
+      </label>
+
+      <label>
+        <span>Org Unit (OU)</span>
+        <input formControlName="organizationalUnit" placeholder="PKI" />
+      </label>
+
+      <label>
+        <span>Country (C)</span>
+        <input formControlName="country" placeholder="RS" maxlength="2" />
+        <small class="err" *ngIf="form.controls.country.invalid && form.controls.country.touched">
+          Two uppercase letters (e.g. RS)
+        </small>
+      </label>
+
+      <label>
+        <span>State/Province (ST)</span>
+        <input formControlName="state" placeholder="Vojvodina" />
+      </label>
+
+      <label>
+        <span>Locality (L)</span>
+        <input formControlName="locality" placeholder="Novi Sad" />
+      </label>
+
+      <label>
+        <span>Years valid</span>
+        <input type="number" formControlName="yearsValid" />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit" [disabled]="isBusy">Create Root CA</button>
+      <span *ngIf="isBusy" class="spinner">Working…</span>
+    </div>
+
+    <p *ngIf="serverError" class="err big">{{ serverError }}</p>
+  </form>
+
+  <div *ngIf="result" class="result card">
+    <h3>Root CA created ✅</h3>
+    <ul>
+      <li><b>ID:</b> {{ result.id }}</li>
+      <li><b>Subject:</b> {{ result.subject }}</li>
+      <li><b>Serial:</b> {{ result.serial }}</li>
+      <li><b>Fingerprint (SHA-256):</b> {{ result.fingerprint }}</li>
+      <li><b>Valid:</b> {{ result.validFrom | date:'medium' }} → {{ result.validTo | date:'medium' }}</li>
+    </ul>
+    <button (click)="downloadPem()">Download certificate (.pem)</button>
+  </div>
+</div>

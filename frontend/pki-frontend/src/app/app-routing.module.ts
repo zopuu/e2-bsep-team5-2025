@@ -6,6 +6,7 @@ import { ActivationComponent } from './components/activation/activation.componen
 import { HomeComponent } from './components/home/home.component';
 import { AdminComponent } from './components/admin/admin.component';
 import { AdminGuard } from './guards/admin.guard';
+import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component';
 
 const routes: Routes = [
   
@@ -15,8 +16,8 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'activate', component: ActivationComponent },
   { path: 'home', component: HomeComponent },
-  { path: '**', redirectTo: '/register' }
-  
+  { path: 'admin/ca', component: AdminCaComponent, canActivate: [AdminGuard] },
+  { path: '**', redirectTo: '/register' },
 ];
 
 @NgModule({

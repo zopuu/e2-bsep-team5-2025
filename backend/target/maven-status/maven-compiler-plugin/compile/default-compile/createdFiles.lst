@@ -3,6 +3,7 @@ com\besp\pki\dto\LoginRequest.class
 com\besp\pki\entity\ActivationToken.class
 com\besp\pki\service\EmailService.class
 com\besp\pki\PkiApplication.class
+com\besp\pki\security\JwtAuthFilter.class
 com\besp\pki\dto\RegistrationRequest.class
 com\besp\pki\service\CryptoSealService.class
 com\besp\pki\service\CertificateService.class

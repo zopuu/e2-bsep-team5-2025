@@ -11,6 +11,7 @@ import { LoginComponent } from './components/login/login.component';
 import { JwtInterceptor } from './interceptors/jwt.interceptor';
 import { HomeComponent } from './components/home/home.component';
 import { AdminComponent } from './components/admin/admin.component';
+import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { AdminComponent } from './components/admin/admin.component';
     ActivationComponent,
     LoginComponent,
     HomeComponent,
-    AdminComponent
+    AdminComponent,
+    AdminCaComponent
   ],
   imports: [
     BrowserModule,
