@@ -37,4 +37,16 @@ public class CryptoSealService {
         byte[] key = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
         return new SecretKeySpec(key, "AES");
     }
+    public String unseal(String sealed) throws Exception {
+        byte[] all = Base64.getDecoder().decode(sealed);
+        byte[] salt = java.util.Arrays.copyOfRange(all, 0, 16);
+        byte[] iv   = java.util.Arrays.copyOfRange(all, 16, 28);
+        byte[] ct   = java.util.Arrays.copyOfRange(all, 28, all.length);
+
+        SecretKeySpec key = derive(MASTER.toCharArray(), salt);
+        Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
+        c.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, iv));
+        byte[] pt = c.doFinal(ct);
+        return new String(pt);
+    }
 }

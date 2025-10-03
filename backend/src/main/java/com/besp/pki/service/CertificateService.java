@@ -12,18 +12,23 @@ import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 
+import java.io.StringWriter;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.X509Certificate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class CertificateService {
@@ -37,9 +42,13 @@ public class CertificateService {
     static {
         Security.addProvider(new BouncyCastleProvider());
     }
+
     public CertificateService(CertificateRecordRepository repo, CryptoSealService seal) {
         this.repo = repo;
         this.seal = seal;
+    }
+    public List<CertificateRecord> findAll() {
+        return repo.findAll();
     }
     public CertificateRecord createRootCa(RootCaRequest req, String adminEmail) throws Exception {
         // 1) KeyPair (RSA 3072)
@@ -157,6 +166,42 @@ public class CertificateService {
 
     private String randomPass() {
         return java.util.UUID.randomUUID().toString().replace("-", "");
+    }
+    public String exportCertificatePem(Long id) throws Exception {
+        CertificateRecord rec = repo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Certificate not found: " + id));
+
+        // Ako je EE i imamo PEM u bazi
+        if (rec.getCertificatePem() != null && !rec.getCertificatePem().isBlank()) {
+            return rec.getCertificatePem();
+        }
+
+        // Inače učitaj iz PKCS#12 (ROOT/INTERMEDIATE)
+        if (rec.getKeystorePath() == null || rec.getKeystoreAlias() == null || rec.getEncKeystorePass() == null)
+            throw new IllegalStateException("Certificate is not backed by a keystore");
+
+        String ksPass = seal.unseal(rec.getEncKeystorePass());
+        Path ksPath = Path.of(rec.getKeystorePath());
+        if (!Files.exists(ksPath)) {
+            throw new IllegalStateException("Keystore file missing: " + ksPath);
+        }
+
+        KeyStore ks = KeyStore.getInstance("PKCS12");
+        try (var in = Files.newInputStream(ksPath)) {
+            ks.load(in, ksPass.toCharArray());
+        }
+        X509Certificate cert = (X509Certificate) ks.getCertificate(rec.getKeystoreAlias());
+        if (cert == null) throw new IllegalStateException("Alias not found in keystore: " + rec.getKeystoreAlias());
+
+        return toPem(cert);
+    }
+
+    private String toPem(X509Certificate cert) throws Exception {
+        StringWriter sw = new StringWriter();
+        try (JcaPEMWriter pw = new JcaPEMWriter(sw)) {
+            pw.writeObject(cert);
+        }
+        return sw.toString();
     }
 
 
