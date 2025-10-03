@@ -74,7 +74,9 @@ public class CertificateService {
 
         // 5) Extensions
         // basicConstaints ( CA = true, pathLen=1)
-        builder.addExtension(Extension.basicConstraints,true, new BasicConstraints(1));
+        builder.addExtension(Extension.basicConstraints,true, new BasicConstraints(1000));
+        // stavljeno na hiljhadu da bi podrzao vise intermediate u jednom lancu. ako se ne navede onda sistem
+        // moze da sadrzi proizvoljan broj intermediate u jednom lancu
 
         int usage = KeyUsage.keyCertSign | KeyUsage.cRLSign;
         builder.addExtension(Extension.keyUsage,true, new KeyUsage(usage));
