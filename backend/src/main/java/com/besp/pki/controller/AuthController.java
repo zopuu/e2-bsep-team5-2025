@@ -73,7 +73,8 @@ public class AuthController {
                         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials"));
                     }
                     userService.updateLastLogin(user);
-                    String token = jwtUtil.generateToken(user.getEmail());
+                    String role = user.getRole().name();
+                    String token = jwtUtil.generateToken(user.getEmail(),role);
                     return ResponseEntity.ok(new LoginResponse(token, "Login successful"));
                 })
                 .orElseGet(() -> ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials")));

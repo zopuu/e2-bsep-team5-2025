@@ -13,5 +13,6 @@ com\besp\pki\controller\AuthController.class
 com\besp\pki\service\PasswordValidationService.class
 com\besp\pki\service\PasswordValidationService$PasswordStrengthResult.class
 com\besp\pki\dto\LoginResponse.class
+com\besp\pki\controller\AdminCertificatesController.class
 com\besp\pki\security\JwtUtil.class
 com\besp\pki\repository\UserRepository.class

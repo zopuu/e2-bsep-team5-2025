@@ -41,7 +41,7 @@ export interface LoginResponse {
 export class AuthService {
   private apiUrl = 'http://localhost:8080';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   register(registrationData: RegistrationRequest): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(`${this.apiUrl}/auth/register`, registrationData);
@@ -59,5 +59,45 @@ export class AuthService {
 
   login(payload: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/auth/login`, payload);
+  }
+  getToken(): string | null {
+    return localStorage.getItem('token');
+  }
+  isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+  // === JWT helpers ===
+  private decodeJwt<T = any>(token: string): T | null {
+    try {
+      const payload = token.split('.')[1];
+      const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(decodeURIComponent(escape(json)));
+    } catch {
+      return null;
+    }
+  }
+
+  /** Vrati rolu iz tokena. Backend najčešće stavlja "roles": ["ROLE_ADMIN"] ili "role": "ROLE_ADMIN" */
+  getRole(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+    const payload = this.decodeJwt<any>(token);
+    if (!payload) return null;
+
+    // POKRIJ OBA FORMATa:
+    if (Array.isArray(payload.roles) && payload.roles.length) {
+      return payload.roles[0];
+    }
+    if (typeof payload.role === 'string') {
+      return payload.role;
+    }
+    // ili ako backend šalje bez prefiksa:
+    if (typeof payload.authority === 'string') return payload.authority;
+    return null;
+  }
+
+  isAdmin(): boolean {
+    const r = this.getRole();
+    return r === 'ROLE_ADMIN' || r === 'ADMIN';
   }
 }

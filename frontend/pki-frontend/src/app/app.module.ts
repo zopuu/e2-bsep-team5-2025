@@ -10,6 +10,7 @@ import { ActivationComponent } from './components/activation/activation.componen
 import { LoginComponent } from './components/login/login.component';
 import { JwtInterceptor } from './interceptors/jwt.interceptor';
 import { HomeComponent } from './components/home/home.component';
+import { AdminComponent } from './components/admin/admin.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { HomeComponent } from './components/home/home.component';
     RegistrationComponent,
     ActivationComponent,
     LoginComponent,
-    HomeComponent
+    HomeComponent,
+    AdminComponent
   ],
   imports: [
     BrowserModule,

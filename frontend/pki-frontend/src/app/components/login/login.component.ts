@@ -18,7 +18,7 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
@@ -43,8 +43,16 @@ export class LoginComponent implements OnInit {
         localStorage.setItem('token', res.token);
         this.messageType = 'success';
         this.message = 'Login successful';
-        this.router.navigate(['/home']);
+
+        // Redirect by role
+        const role = this.authService.getRole();
+        if (role === 'ROLE_ADMIN' || role === 'ADMIN') {
+          this.router.navigate(['/admin']);
+        } else {
+          this.router.navigate(['/home']);
+        }
       },
+
       error: (err) => {
         this.isLoading = false;
         this.messageType = 'error';
