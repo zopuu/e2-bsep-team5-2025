@@ -1,10 +1,16 @@
 package com.besp.pki.service;
 
+import com.besp.pki.dto.CertificateResponse;
+import com.besp.pki.dto.IntermediateCaRequest;
 import com.besp.pki.dto.RootCaRequest;
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
 import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.entity.CertificateRecord;
+import com.besp.pki.entity.User;
 import com.besp.pki.repository.CertificateRecordRepository;
+import com.besp.pki.x509.FingerprintUtil;
+import com.besp.pki.x509.PemUtil;
+import com.besp.pki.x509.X500Util;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -18,6 +24,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.StringWriter;
 import java.math.BigInteger;
@@ -25,8 +32,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -35,6 +45,7 @@ public class CertificateService {
 
     private final com.besp.pki.repository.CertificateRecordRepository repo;
     private final CryptoSealService seal;
+    private final KeyStoreService ks;
 
     @Value("${pki.keystore-dir:./data/keystores}")
     private String keystoreDir;
@@ -43,9 +54,10 @@ public class CertificateService {
         Security.addProvider(new BouncyCastleProvider());
     }
 
-    public CertificateService(CertificateRecordRepository repo, CryptoSealService seal) {
+    public CertificateService(CertificateRecordRepository repo, CryptoSealService seal, KeyStoreService ks) {
         this.repo = repo;
         this.seal = seal;
+        this.ks = ks;
     }
     public List<CertificateRecord> findAll() {
         return repo.findAll();
@@ -128,7 +140,7 @@ public class CertificateService {
         rec.setPublicKeyAlgorithm(cert.getPublicKey().getAlgorithm());
         rec.setKeySize(extractKeySize(cert.getPublicKey()));
         rec.setCa(true);
-        rec.setPathLenConstraint(1);
+        rec.setPathLenConstraint(1000);
         rec.setKeystorePath(ksPath.toString());
         rec.setKeystoreAlias(alias);
         rec.setEncKeystorePass(seal.seal(ksPass));
@@ -137,6 +149,180 @@ public class CertificateService {
 
         return repo.save(rec);
     }
+    @Transactional
+    public CertificateResponse issueIntermediateCA(IntermediateCaRequest req) {
+        // 1) Issuer
+        CertificateRecord issuer = repo.findById(req.issuerRecordId())
+                .orElseThrow(() -> new IllegalArgumentException("Issuer not found: " + req.issuerRecordId()));
+
+        if (issuer.getStatus() != CertificateStatus.ACTIVE)
+            throw new IllegalStateException("Issuer is not ACTIVE");
+        if (!issuer.isCa())
+            throw new IllegalStateException("Issuer is not a CA");
+        X509Certificate issuerCert = null;
+        X509Certificate[] issuerChain = null;
+        PrivateKey issuerKey = null;
+
+        try {
+            // 2) Učitaj issuer privatni ključ i chain
+            char[] issuerPass = seal.unseal(issuer.getEncKeystorePass()).toCharArray();
+            issuerCert = ks.readCertificate(issuer.getKeystorePath(), issuer.getKeystoreAlias(), issuerPass);
+            issuerChain = ks.readChain(issuer.getKeystorePath(), issuer.getKeystoreAlias(), issuerPass);
+            issuerKey = ks.readPrivateKey(issuer.getKeystorePath(), issuer.getKeystoreAlias(), issuerPass);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // 3) Validnost
+        Instant now = Instant.now();
+        Instant notBefore = now.minusSeconds(60);
+        Instant notAfter = now.plus(req.yearsValid(), ChronoUnit.YEARS);
+        if (issuerCert.getNotAfter().toInstant().isBefore(notAfter)) {
+            throw new IllegalArgumentException("Subject validity exceeds issuer validity");
+        }
+
+        // 4) PathLen constraint provera
+        Integer issuerPathLen = readPathLen(issuerCert);
+        Integer requestedPathLen = req.pathLenConstraint();
+        if (issuerPathLen != null) {
+            int maxAllowed = issuerPathLen - 1;
+            int subjLen = (requestedPathLen == null) ? maxAllowed : requestedPathLen;
+            if (subjLen > maxAllowed) {
+                throw new IllegalArgumentException("pathLenConstraint exceeds issuer allowance");
+            }
+            requestedPathLen = subjLen;
+        }
+
+        try {
+            // 5) Kreiraj subject keypair
+            String publicKeyAlgorithm = "RSA";
+            int keySize = 4096;
+            KeyPairGenerator kpg = KeyPairGenerator.getInstance(publicKeyAlgorithm);
+            kpg.initialize(keySize, SecureRandom.getInstanceStrong());
+            KeyPair subjectKP = kpg.generateKeyPair();
+
+            // 6) DNs
+            X500Name issuerDN = new X500Name(issuerCert.getSubjectX500Principal().getName());
+            X500Name subjectDN = X500Util.fromDto(req.subject());
+
+            // 7) Serijski broj (hex)
+            BigInteger serial = new BigInteger(160, SecureRandom.getInstanceStrong());
+            String serialHex = serial.toString(16);
+
+            // 8) X509v3 builder + ekstenzije
+            JcaX509ExtensionUtils extUtil = new JcaX509ExtensionUtils();
+            X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+                    issuerDN, serial,
+                    Date.from(notBefore), Date.from(notAfter),
+                    subjectDN, subjectKP.getPublic());
+
+            // BasicConstraints CA
+            BasicConstraints bc = (requestedPathLen == null) ? new BasicConstraints(true) : new BasicConstraints(requestedPathLen);
+            builder.addExtension(Extension.basicConstraints, true, bc);
+
+            // KeyUsage
+            builder.addExtension(Extension.keyUsage, true,
+                    new KeyUsage(KeyUsage.keyCertSign | KeyUsage.cRLSign));
+
+            // SKI / AKI
+            builder.addExtension(Extension.subjectKeyIdentifier, false,
+                    extUtil.createSubjectKeyIdentifier(subjectKP.getPublic()));
+            builder.addExtension(Extension.authorityKeyIdentifier, false,
+                    extUtil.createAuthorityKeyIdentifier(issuerCert));
+
+            // (opciono) CRL DP i OCSP AIA
+            if (req.crlDistributionPoint() != null && !req.crlDistributionPoint().isBlank()) {
+                DistributionPointName dpn = new DistributionPointName(
+                        new GeneralNames(new GeneralName(GeneralName.uniformResourceIdentifier, req.crlDistributionPoint())));
+                DistributionPoint[] dps = new DistributionPoint[]{ new DistributionPoint(dpn, null, null) };
+                builder.addExtension(Extension.cRLDistributionPoints, false, new CRLDistPoint(dps));
+            }
+            if (req.ocspUrl() != null && !req.ocspUrl().isBlank()) {
+                AccessDescription ad = new AccessDescription(AccessDescription.id_ad_ocsp,
+                        new GeneralName(GeneralName.uniformResourceIdentifier, req.ocspUrl()));
+                AuthorityInformationAccess aia = new AuthorityInformationAccess(ad);
+                builder.addExtension(Extension.authorityInfoAccess, false, aia);
+            }
+
+            // 9) Potpis
+            String sigAlg = "SHA256withRSA";
+            ContentSigner signer = new JcaContentSignerBuilder(sigAlg).build(issuerKey);
+            X509CertificateHolder holder = builder.build(signer);
+            X509Certificate subjectCert = new JcaX509CertificateConverter()
+                    .setProvider(new BouncyCastleProvider())
+                    .getCertificate(holder);
+
+            subjectCert.checkValidity(Date.from(now));
+            subjectCert.verify(issuerCert.getPublicKey());
+
+            // 10) Chain
+            X509Certificate[] newChain = new X509Certificate[issuerChain.length + 1];
+            newChain[0] = subjectCert;
+            System.arraycopy(issuerChain, 0, newChain, 1, issuerChain.length);
+
+            // 11) Keystore (po sertifikatu)
+            String alias = "ca-" + serialHex;
+            String entryPassPlain = randomStrong(24);
+            var ref = ks.storeEntryPerCert(keystoreDir, alias, subjectKP.getPrivate(), entryPassPlain.toCharArray(), newChain);
+
+            List<String> chainSubjectDns = Arrays.stream(newChain)
+                    .map(c -> c.getSubjectX500Principal().getName())
+                    .toList();
+
+            // 12) Persist u tvoju tabelu (BEZ promene naziva polja)
+            CertificateRecord rec = new CertificateRecord();
+            rec.setSerialNumber(serialHex);
+            rec.setType(CertificateType.INTERMEDIATE);               // tvoje enum polje
+            rec.setSubjectDn(subjectCert.getSubjectX500Principal().getName());
+            rec.setIssuerDn(issuerCert.getSubjectX500Principal().getName());
+            rec.setNotBefore(notBefore);
+            rec.setNotAfter(notAfter);
+            rec.setFingerprintSha256(FingerprintUtil.sha256Hex(subjectCert));
+            rec.setSignatureAlgorithm(sigAlg);
+            rec.setPublicKeyAlgorithm(publicKeyAlgorithm);
+            rec.setKeySize(keySize);
+            rec.setCa(true);
+            rec.setPathLenConstraint(requestedPathLen);
+            rec.setStatus(CertificateStatus.ACTIVE);
+            rec.setKeystorePath(ref.path());
+            rec.setKeystoreAlias(ref.alias());
+            rec.setEncKeystorePass(seal.seal(entryPassPlain));
+            rec.setCertificatePem(PemUtil.toPem(subjectCert));
+            rec.setCrlDistrigutionPoint(req.crlDistributionPoint());
+            rec.setOcspUrl(req.ocspUrl());
+            rec.setIssuer(issuer);
+            if (req.ownerUserId() != null) {
+                User u = new User(); u.setId(req.ownerUserId()); // pretpostavka: long id, lazy ref
+                rec.setOwner(u);
+            }
+            rec.setCreatedBy(req.createdBy());
+
+            repo.save(rec);
+
+            return new CertificateResponse(
+                    rec.getSerialNumber(),
+                    rec.getSubjectDn(),
+                    rec.getIssuerDn(),
+                    rec.getNotBefore(),
+                    rec.getNotAfter(),
+                    rec.isCa(),
+                    rec.getPathLenConstraint(),
+                    chainSubjectDns
+            );
+
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception e) {
+            throw new RuntimeException("Intermediate CA issuance failed", e);
+        }
+    }
+
+
+
+
+
+
+
     private String buildDn(RootCaRequest r) {
         StringBuilder sb = new StringBuilder();
         sb.append("CN=").append(escape(r.commonName));
@@ -204,6 +390,27 @@ public class CertificateService {
             pw.writeObject(cert);
         }
         return sw.toString();
+    }
+    private Integer readPathLen(X509Certificate cert) {
+        try {
+            byte[] ext = cert.getExtensionValue(Extension.basicConstraints.getId());
+            if (ext == null) return null;
+            var der = JcaX509ExtensionUtils.parseExtensionValue(ext);
+            BasicConstraints bc = BasicConstraints.getInstance(der);
+            if (!bc.isCA()) return null;
+            return (bc.getPathLenConstraint()==null) ? null : bc.getPathLenConstraint().intValueExact();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String randomStrong(int len) {
+        final String alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
+        SecureRandom rnd;
+        try { rnd = SecureRandom.getInstanceStrong(); } catch (Exception e) { rnd = new SecureRandom(); }
+        StringBuilder sb = new StringBuilder(len);
+        for (int i=0;i<len;i++) sb.append(alphabet.charAt(rnd.nextInt(alphabet.length())));
+        return sb.toString();
     }
 
 

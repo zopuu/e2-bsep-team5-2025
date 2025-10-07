@@ -1,5 +1,6 @@
 package com.besp.pki.controller;
 
+import com.besp.pki.dto.IntermediateCaRequest;
 import com.besp.pki.dto.RootCaRequest;
 import com.besp.pki.entity.CertificateRecord;
 import com.besp.pki.service.CertificateService;
@@ -19,8 +20,11 @@ import java.util.Map;
 @RequestMapping("/api/admin")
 public class AdminCertificatesController {
     private final CertificateService service;
-    public AdminCertificatesController(CertificateService service) {
+    private final CertificateService certificateService;
+
+    public AdminCertificatesController(CertificateService service, CertificateService certificateService) {
         this.service = service;
+        this.certificateService = certificateService;
     }
 
     @PostMapping("/ca/root")
@@ -49,6 +53,11 @@ public class AdminCertificatesController {
                 .contentType(MediaType.valueOf("application/x-pem-file"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"certificate-" + id + ".pem\"")
                 .body(body);
+    }
+    @PostMapping("/intermediate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> issueIntermediate(@Valid @RequestBody IntermediateCaRequest req) throws Exception {
+        return ResponseEntity.ok(certificateService.issueIntermediateCA(req));
     }
     @GetMapping("/certificates")
     @PreAuthorize("hasRole('Admin')")
