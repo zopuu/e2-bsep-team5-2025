@@ -1,0 +1,14 @@
+.wrap { max-width: 920px; margin: 24px auto; }
+.muted { color: #777; }
+.card { background: #85b8db; border: 1px solid #2a2a2a; padding: 16px; border-radius: 12px; }
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); gap: 12px;
+}
+label { display: flex; flex-direction: column; gap: 6px; }
+input, select { padding: 8px 10px; border-radius: 8px; border: 1px solid #3a3a3a; background: #1a1a1a; color: #eee; }
+.actions { margin-top: 12px; display: flex; gap: 12px; align-items: center; }
+button { padding: 10px 14px; border: 0; border-radius: 10px; background: #2d6cdf; color: #fff; cursor: pointer; }
+.err { color: #ff6b6b; }
+.err.big { margin-top: 8px; }
+.result { margin-top: 18px; }
+.spinner { opacity: .8; }

@@ -150,7 +150,7 @@ public class CertificateService {
         return repo.save(rec);
     }
     @Transactional
-    public CertificateResponse issueIntermediateCA(IntermediateCaRequest req) {
+    public CertificateResponse issueIntermediateCA(IntermediateCaRequest req, String createdBy) {
         // 1) Issuer
         CertificateRecord issuer = repo.findById(req.issuerRecordId())
                 .orElseThrow(() -> new IllegalArgumentException("Issuer not found: " + req.issuerRecordId()));
@@ -174,9 +174,9 @@ public class CertificateService {
         }
 
         // 3) Validnost
-        Instant now = Instant.now();
-        Instant notBefore = now.minusSeconds(60);
-        Instant notAfter = now.plus(req.yearsValid(), ChronoUnit.YEARS);
+        ZonedDateTime zNow = ZonedDateTime.now(ZoneOffset.UTC);
+        Instant notBefore = zNow.minusSeconds(60).toInstant();
+        Instant notAfter  = zNow.plusYears(req.yearsValid()).toInstant();
         if (issuerCert.getNotAfter().toInstant().isBefore(notAfter)) {
             throw new IllegalArgumentException("Subject validity exceeds issuer validity");
         }
@@ -252,7 +252,7 @@ public class CertificateService {
                     .setProvider(new BouncyCastleProvider())
                     .getCertificate(holder);
 
-            subjectCert.checkValidity(Date.from(now));
+            subjectCert.checkValidity(Date.from(zNow.toInstant()));
             subjectCert.verify(issuerCert.getPublicKey());
 
             // 10) Chain
@@ -295,7 +295,7 @@ public class CertificateService {
                 User u = new User(); u.setId(req.ownerUserId()); // pretpostavka: long id, lazy ref
                 rec.setOwner(u);
             }
-            rec.setCreatedBy(req.createdBy());
+            rec.setCreatedBy(createdBy);
 
             repo.save(rec);
 

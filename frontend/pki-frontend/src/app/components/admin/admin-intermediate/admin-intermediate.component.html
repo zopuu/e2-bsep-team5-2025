@@ -1,0 +1,108 @@
+<div class="wrap">
+  <h1>Intermediate CA</h1>
+  <p class="muted">Issue a CA certificate signed by an existing CA.</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card">
+    <div class="grid">
+
+      <label>
+        <span>Issuer (existing CA) *</span>
+        <select formControlName="issuerRecordId">
+          <option [ngValue]="null" disabled>Select issuer</option>
+          <option *ngFor="let i of issuers" [ngValue]="i.id">
+            {{ i.subjectDn }}
+          </option>
+        </select>
+        <small class="err" *ngIf="form.controls['issuerRecordId'].touched && form.controls['issuerRecordId'].invalid">
+          Issuer is required
+        </small>
+      </label>
+
+      <label>
+        <span>Common Name (CN) *</span>
+        <input formControlName="commonName" placeholder="Team5 Intermediate CA" />
+        <small class="err" *ngIf="form.controls['commonName'].touched && form.controls['commonName'].invalid">
+          Required (max 128)
+        </small>
+      </label>
+
+      <label>
+        <span>Organization (O)</span>
+        <input formControlName="organization" placeholder="FTN" />
+      </label>
+
+      <label>
+        <span>Org Unit (OU)</span>
+        <input formControlName="organizationalUnit" placeholder="Security" />
+      </label>
+
+      <label>
+        <span>Country (C)</span>
+        <input formControlName="country" placeholder="RS" maxlength="2" />
+        <small class="err" *ngIf="form.controls['country'].invalid && form.controls['country'].touched">
+          Two uppercase letters (e.g. RS)
+        </small>
+      </label>
+
+      <label>
+        <span>State/Province (ST)</span>
+        <input formControlName="state" placeholder="Vojvodina" />
+      </label>
+
+      <label>
+        <span>Locality (L)</span>
+        <input formControlName="locality" placeholder="Novi Sad" />
+      </label>
+
+      <label>
+        <span>Years valid *</span>
+        <input type="number" formControlName="yearsValid" />
+      </label>
+
+      <label>
+        <span>pathLenConstraint</span>
+        <input type="number" formControlName="pathLenConstraint" />
+        <small class="muted">0 = ne može izdavati CA ispod sebe, samo EE</small>
+      </label>
+
+      <label>
+        <span>CRL Distribution Point (URL)</span>
+        <input formControlName="crlDistributionPoint" placeholder="http://pki.example.rs/crl/intermediate.crl" />
+      </label>
+
+      <label>
+        <span>OCSP URL</span>
+        <input formControlName="ocspUrl" placeholder="http://ocsp.example.rs" />
+      </label>
+
+      <label>
+        <span>Owner User ID (optional)</span>
+        <input type="number" formControlName="ownerUserId" />
+      </label>
+    </div>
+
+    <div class="actions">
+      <button type="submit" [disabled]="isBusy">Create Intermediate CA</button>
+      <span *ngIf="isBusy" class="spinner">Working…</span>
+    </div>
+
+    <p *ngIf="serverError" class="err big">{{ serverError }}</p>
+  </form>
+
+  <div *ngIf="result" class="result card">
+    <h3>Intermediate CA created ✅</h3>
+    <ul>
+      <li><b>Subject:</b> {{ result.subjectDn }}</li>
+      <li><b>Issuer:</b> {{ result.issuerDn }}</li>
+      <li><b>Serial:</b> {{ result.serialNumber }}</li>
+      <li><b>Valid:</b> {{ result.notBefore | date:'medium' }} → {{ result.notAfter | date:'medium' }}</li>
+      <li><b>CA:</b> {{ result.isCa ? 'Yes' : 'No' }}</li>
+      <li><b>pathLenConstraint:</b> {{ result.pathLenConstraint ?? '—' }}</li>
+      <li *ngIf="result.chainSubjectDns?.length"><b>Chain</b>
+        <ul>
+          <li *ngFor="let s of result.chainSubjectDns">{{ s }}</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</div>

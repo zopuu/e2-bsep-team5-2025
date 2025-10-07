@@ -56,11 +56,12 @@ public class AdminCertificatesController {
     }
     @PostMapping("/intermediate")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> issueIntermediate(@Valid @RequestBody IntermediateCaRequest req) throws Exception {
-        return ResponseEntity.ok(certificateService.issueIntermediateCA(req));
+    public ResponseEntity<?> issueIntermediate(@Valid @RequestBody IntermediateCaRequest req, Authentication auth) throws Exception {
+        String createdBy = auth != null ? auth.getName() : "unknown";
+        return ResponseEntity.ok(certificateService.issueIntermediateCA(req,createdBy));
     }
     @GetMapping("/certificates")
-    @PreAuthorize("hasRole('Admin')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> listAll() {
         return ResponseEntity.ok(service.findAll());
     }

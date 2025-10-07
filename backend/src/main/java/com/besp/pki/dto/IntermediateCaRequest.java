@@ -15,6 +15,5 @@ public record IntermediateCaRequest(
         List<String> authorityInfoAccessOcsp,
         String crlDistributionPoint,
         String ocspUrl,
-        Long ownerUserId,
-        String createdBy
+        Long ownerUserId
 ) {}
