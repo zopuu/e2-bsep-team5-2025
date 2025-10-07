@@ -43,7 +43,7 @@ export class AdminIntermediateComponent implements OnInit {
     private fb: FormBuilder,
     private api: AdminApiService,
     private auth: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loadIssuers();
@@ -99,8 +99,10 @@ export class AdminIntermediateComponent implements OnInit {
       },
       error: (err) => {
         this.isBusy = false;
-        this.serverError = err?.error || err?.error?.message || 'Failed to create Intermediate CA';
+        const msg = err?.error?.message || err?.error || err?.message || 'Internal error';
+        this.serverError = String(msg);
       }
+
     });
   }
 

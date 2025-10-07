@@ -79,6 +79,7 @@ public class CertificateService {
         Date notBefore = Date.from(now.toInstant());
         Date notAfter = Date.from(now.plusYears(req.yearsValid).toInstant());
 
+
         // 4)X509v3 builder
         X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
                 x500, serial, notBefore, notAfter, x500, kp.getPublic()
@@ -202,12 +203,14 @@ public class CertificateService {
             KeyPair subjectKP = kpg.generateKeyPair();
 
             // 6) DNs
-            X500Name issuerDN = new X500Name(issuerCert.getSubjectX500Principal().getName());
+            //X500Name issuerDN = new X500Name(issuerCert.getSubjectX500Principal().getName());
+            X500Name issuerDN = X500Name.getInstance(issuerCert.getSubjectX500Principal().getEncoded());    //fix
             X500Name subjectDN = X500Util.fromDto(req.subject());
 
             // 7) Serijski broj (hex)
             BigInteger serial = new BigInteger(160, SecureRandom.getInstanceStrong());
             String serialHex = serial.toString(16);
+
 
             // 8) X509v3 builder + ekstenzije
             JcaX509ExtensionUtils extUtil = new JcaX509ExtensionUtils();
@@ -255,10 +258,46 @@ public class CertificateService {
             subjectCert.checkValidity(Date.from(zNow.toInstant()));
             subjectCert.verify(issuerCert.getPublicKey());
 
+            System.out.println("ISSUER of LEAF (to be) = " + issuerDN);
+            System.out.println("SUBJECT of ROOT        = " + X500Name.getInstance(issuerCert.getSubjectX500Principal().getEncoded()));
+
+            boolean namesEqual =
+                    subjectCert == null // još ne postoji, pa proveravamo planirano
+                            || issuerCert.getSubjectX500Principal().equals(issuerCert.getSubjectX500Principal()); // placeholder
+
+            // Posle što izgradiš i konvertuješ leaf cert:
+            System.out.println("leaf.issuer == root.subject ? " +
+                    subjectCert.getIssuerX500Principal().equals(issuerCert.getSubjectX500Principal()));
+
+
             // 10) Chain
-            X509Certificate[] newChain = new X509Certificate[issuerChain.length + 1];
-            newChain[0] = subjectCert;
-            System.arraycopy(issuerChain, 0, newChain, 1, issuerChain.length);
+            X509Certificate[] newChain = assemblePkcs12Chain(subjectCert, issuerCert, issuerChain);
+            debugChainForPkcs12(newChain);
+
+            // 0) sigurnosna provera da se privatni ključ i leaf poklapaju
+            if (!java.util.Arrays.equals(
+                    subjectCert.getPublicKey().getEncoded(),
+                    subjectKP.getPublic().getEncoded())) {
+                throw new IllegalStateException("Leaf cert public key doesn't match generated subject keypair!");
+            }
+            // ekstra – javni ključ iz privatnog:
+            PublicKey derived = KeyFactory.getInstance(subjectKP.getPrivate().getAlgorithm())
+                    .generatePublic(new java.security.spec.X509EncodedKeySpec(
+                            subjectCert.getPublicKey().getEncoded()));
+            if (!java.util.Arrays.equals(derived.getEncoded(), subjectCert.getPublicKey().getEncoded())) {
+                throw new IllegalStateException("Private key doesn't correspond to leaf certificate.");
+            }
+            var certs = java.util.Arrays.asList(newChain); // ili trimmed
+            var cf = java.security.cert.CertificateFactory.getInstance("X.509");
+            var certPath = cf.generateCertPath(certs);
+
+            // TrustAnchor = self-signed root (ako ga imaš u nizu)
+            var trust = new java.security.cert.TrustAnchor(certs.get(certs.size() - 1), null);
+            var params = new java.security.cert.PKIXParameters(java.util.Set.of(trust));
+            params.setRevocationEnabled(false);
+
+            java.security.cert.CertPathValidator.getInstance("PKIX").validate(certPath, params);
+
 
             // 11) Keystore (po sertifikatu)
             String alias = "ca-" + serialHex;
@@ -412,6 +451,89 @@ public class CertificateService {
         for (int i=0;i<len;i++) sb.append(alphabet.charAt(rnd.nextInt(alphabet.length())));
         return sb.toString();
     }
+    private static boolean isSelfSigned(X509Certificate c) {
+        try { c.verify(c.getPublicKey()); return true; } catch (Exception e) { return false; }
+    }
+    private static boolean isSignedBy(X509Certificate cert, X509Certificate issuer) {
+        try { cert.verify(issuer.getPublicKey()); return true; } catch (Exception e) { return false; }
+    }
+
+    /**
+     * Vrati chain tačno u formatu koji PKCS12 očekuje:
+     * [ subject, issuer, ... , root(self-signed) ]
+     * issuerChain može doći bez issuer-a ili u pogrešnom redosledu – ovo to popravlja.
+     */
+    private static X509Certificate[] assemblePkcs12Chain(
+            X509Certificate subjectCert,
+            X509Certificate issuerCert,
+            X509Certificate[] issuerChainRaw
+    ) {
+        // 1) Normalizuj issuerChain tako da ide od issuer-a naviše i da se završava root-om
+        List<X509Certificate> chain = new java.util.ArrayList<>();
+        if (issuerChainRaw != null && issuerChainRaw.length > 0) {
+            // ako prvi NE potpisuje issuerCert, probaj obrni
+            if (!isSignedBy(issuerCert, issuerChainRaw[0])) {
+                java.util.Collections.reverse(java.util.Arrays.asList(issuerChainRaw));
+            }
+            chain.addAll(java.util.Arrays.asList(issuerChainRaw));
+        }
+
+        // 2) Ako uopšte nema elemenata ili prvi nije baš issuerCert – ubaci issuerCert na početak
+        if (chain.isEmpty() || !chain.get(0).equals(issuerCert)) {
+            chain.add(0, issuerCert);
+        }
+
+        // 3) Validacija parova (svaki mora biti potpisan sledećim)
+        for (int i = 0; i < chain.size() - 1; i++) {
+            if (!isSignedBy(chain.get(i), chain.get(i + 1))) {
+                throw new IllegalStateException("Issuer chain order invalid at index " + i);
+            }
+        }
+        if (!isSelfSigned(chain.get(chain.size() - 1))) {
+            throw new IllegalStateException("Chain does not end with a self-signed root.");
+        }
+
+        // 4) Složi konačan PKCS12 niz: subject + (issuer, ... , root)
+        X509Certificate[] out = new X509Certificate[chain.size() + 1];
+        out[0] = subjectCert;
+        for (int i = 0; i < chain.size(); i++) out[i + 1] = chain.get(i);
+
+        // 5) Završna provera celog lanca koji ide u setKeyEntry
+        for (int i = 0; i < out.length - 1; i++) {
+            if (!isSignedBy(out[i], out[i + 1])) {
+                throw new IllegalStateException("Assembled PKCS12 chain invalid at index " + i);
+            }
+        }
+        if (!isSelfSigned(out[out.length - 1])) {
+            throw new IllegalStateException("Assembled PKCS12 chain does not end with self-signed root.");
+        }
+        return out;
+    }
+    private static void debugChainForPkcs12(X509Certificate[] chain) {
+        System.out.println("---- PKCS12 chain debug (0..n, 0=leaf) ----");
+        for (int i = 0; i < chain.length; i++) {
+            X509Certificate c = chain[i];
+            System.out.println("[" + i + "] SUBJ=" + c.getSubjectX500Principal());
+            System.out.println("    ISSR=" + c.getIssuerX500Principal());
+        }
+        for (int i = 0; i < chain.length - 1; i++) {
+            try {
+                chain[i].verify(chain[i+1].getPublicKey());
+                System.out.println("verify[" + i + "->" + (i+1) + "] OK");
+            } catch (Exception e) {
+                System.out.println("verify[" + i + "->" + (i+1) + "] FAIL: " + e);
+            }
+        }
+        try {
+            chain[chain.length-1].verify(chain[chain.length-1].getPublicKey());
+            System.out.println("last self-signed: YES");
+        } catch (Exception e) {
+            System.out.println("last self-signed: NO (" + e + ")");
+        }
+    }
+
+
+
 
 
 }
