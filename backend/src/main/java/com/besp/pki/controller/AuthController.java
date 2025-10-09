@@ -6,6 +6,7 @@ import com.besp.pki.dto.RegistrationRequest;
 import com.besp.pki.dto.LoginRequest;
 import com.besp.pki.dto.LoginResponse;
 import com.besp.pki.security.JwtUtil;
+import com.besp.pki.service.CaptchaService;
 import com.besp.pki.service.PasswordValidationService;
 import com.besp.pki.service.UserService;
 import jakarta.validation.Valid;
@@ -23,12 +24,14 @@ public class AuthController {
     private final UserService userService;
     private final PasswordValidationService passwordValidationService;
     private final JwtUtil jwtUtil;
+    private final CaptchaService captchaService;
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    public AuthController(UserService userService, PasswordValidationService passwordValidationService, JwtUtil jwtUtil) {
+    public AuthController(UserService userService, PasswordValidationService passwordValidationService, JwtUtil jwtUtil, CaptchaService captchaService) {
         this.userService = userService;
         this.passwordValidationService = passwordValidationService;
         this.jwtUtil = jwtUtil;
+        this.captchaService = captchaService;
     }
     
     @PostMapping("/register")
@@ -66,6 +69,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
+            // Verify captcha first
+            String clientIp = null; // optionally extract from request if needed
+            boolean captchaOk = captchaService.verify(request.getCaptchaToken(), clientIp);
+            if (!captchaOk) {
+                return ResponseEntity.badRequest().body(ApiResponse.error("CAPTCHA verification failed"));
+            }
             return userService.findByEmail(request.getEmail())
                 .filter(User::isEnabled)
                 .map(user -> {

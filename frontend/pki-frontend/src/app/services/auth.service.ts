@@ -28,6 +28,7 @@ export interface PasswordStrengthResult {
 export interface LoginRequest {
   email: string;
   password: string;
+  captchaToken: string;
 }
 
 export interface LoginResponse {

@@ -22,8 +22,12 @@
     <button type="submit" [disabled]="isLoading">Login</button>
 
     <p *ngIf="message" [class]="messageType">{{ message }}</p>
+
+    <!-- Cloudflare Turnstile widget -->
+    <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITE_KEY"></div>
   </form>
 </div>
+
 
 
 

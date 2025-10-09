@@ -13,6 +13,7 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   message = '';
   messageType: 'success' | 'error' | '' = '';
+  private captchaToken: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -25,6 +26,14 @@ export class LoginComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required]]
     });
+
+    // Turnstile callback to capture token
+    (window as any).onloadTurnstileCallback = () => {
+      // tokens are emitted automatically by Turnstile; listen to global event
+      document.addEventListener('turnstile-token', (e: any) => {
+        this.captchaToken = e.detail.token;
+      });
+    };
   }
 
   onSubmit(): void {
@@ -35,7 +44,7 @@ export class LoginComponent implements OnInit {
 
     this.isLoading = true;
     this.message = '';
-    const payload: LoginRequest = this.loginForm.value;
+    const payload: LoginRequest = { ...this.loginForm.value, captchaToken: this.captchaToken };
 
     this.authService.login(payload).subscribe({
       next: (res: LoginResponse) => {
