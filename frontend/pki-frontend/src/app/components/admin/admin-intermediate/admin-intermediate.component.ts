@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { AdminApiService, CertificateListItem } from '../../../services/admin.service';
 import { AuthService } from '../../../services/auth.service';
+import { notBeyondIssuerValidator, pathLenWithinIssuerValidator } from '../../../validators/certificate-validators';
 
 interface IssuerOption {
   id: number;
@@ -11,6 +12,7 @@ interface IssuerOption {
   status: string;
   notAfter: string;
 }
+
 
 @Component({
   selector: 'app-admin-intermediate',
@@ -21,6 +23,7 @@ export class AdminIntermediateComponent implements OnInit {
   isBusy = false;
   serverError = '';
   result: any = null;  // backend CertificateResponse
+  selectedIssuer: CertificateListItem | null = null;
 
   //issuers: IssuerOption[] = [];
   issuers: CertificateListItem[] = [];
@@ -37,6 +40,11 @@ export class AdminIntermediateComponent implements OnInit {
     crlDistributionPoint: [''],
     ocspUrl: [''],
     ownerUserId: [null],
+  }, {
+    validators: [
+      notBeyondIssuerValidator(() => this.selectedIssuer ? new Date(this.selectedIssuer.notAfter) : null),
+      pathLenWithinIssuerValidator(() => this.selectedIssuer ? this.selectedIssuer.pathLenConstraint : null),
+    ]
   });
 
   constructor(
@@ -47,6 +55,10 @@ export class AdminIntermediateComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadIssuers();
+    this.form.get('issuerRecordId')!.valueChanges.subscribe(id => {
+      this.selectedIssuer = this.issuers.find(x => x.id === id) ?? null;
+      this.form.updateValueAndValidity({ emitEvent: false });
+    });
   }
 
   private loadIssuers() {

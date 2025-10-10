@@ -57,12 +57,25 @@
       <label>
         <span>Years valid *</span>
         <input type="number" formControlName="yearsValid" />
+        <small class="err" *ngIf="form.errors?.['beyondIssuer']">
+          Issuer expires: {{ selectedIssuer?.notAfter | date:'medium' }}.
+        </small>
       </label>
 
       <label>
         <span>pathLenConstraint</span>
         <input type="number" formControlName="pathLenConstraint" />
-        <small class="muted">0 = ne može izdavati CA ispod sebe, samo EE</small>
+        <small class="muted">0 = can not issue CA below itself, only EE</small>
+        <small class="err" *ngIf="form.errors?.['issuerPathLenZero']">
+          Chosen issuer has pathLen=0 and can not issue CA.
+        </small>
+        <small class="err" *ngIf="form.errors?.['pathLenInvalid']">
+          pathLenConstraint has to be integer ≥ 0.
+        </small>
+        <small class="err" *ngIf="form.errors?.['pathLenTooHigh']">
+          Max allowed: {{ form.errors?.['pathLenTooHigh']?.maxAllowed }}
+          (because issuer pathLen is {{ selectedIssuer?.pathLenConstraint }}).
+        </small>
       </label>
 
       <label>
@@ -82,7 +95,7 @@
     </div>
 
     <div class="actions">
-      <button type="submit" [disabled]="isBusy">Create Intermediate CA</button>
+      <button type="submit" [disabled]="isBusy || form.invalid">Create Intermediate CA</button>
       <span *ngIf="isBusy" class="spinner">Working…</span>
     </div>
 

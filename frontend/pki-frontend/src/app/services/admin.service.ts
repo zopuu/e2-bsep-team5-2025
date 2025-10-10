@@ -13,6 +13,7 @@ export interface CertificateListItem {
   ca: boolean;
   status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
   type: 'ROOT' | 'INTERMEDIATE' | 'EE' | 'CA';
+  pathLenConstraint: number | null;
 }
 
 @Injectable({ providedIn: 'root' })

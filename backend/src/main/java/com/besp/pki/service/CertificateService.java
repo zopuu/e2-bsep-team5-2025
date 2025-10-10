@@ -138,7 +138,19 @@ public class CertificateService {
             var validity = validityOf(req.yearsValid());
             checkIssuerValidity(issuerCert, validity.notAfter());
 
+            if (req.pathLenConstraint() != null && req.pathLenConstraint() < 0) {
+                throw new IllegalArgumentException("pathLenConstraint must be >= 0");
+            }
+            Integer issuerPathLen = readPathLen(issuerCert);
+            if (issuerPathLen != null) {
+                if (issuerPathLen <= 0) {
+                    throw new IllegalArgumentException("Issuer has pathLenConstraint=0 and cannot issue a CA.");
+                }
+            }
             Integer requestedPathLen = resolvePathLen(issuerCert, req.pathLenConstraint());
+            if (requestedPathLen != null && requestedPathLen < 0) {
+                throw new IllegalArgumentException("pathLenConstraint cannot be negative");
+            }
 
             KeyPairGenerator kpg = KeyPairGenerator.getInstance(KEY_ALG_RSA);
             kpg.initialize(4096, RNG);
