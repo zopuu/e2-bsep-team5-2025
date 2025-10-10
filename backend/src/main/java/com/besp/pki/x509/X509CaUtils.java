@@ -1,10 +1,8 @@
 package com.besp.pki.x509;
 
-import com.besp.pki.dto.RootCaRequest;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
@@ -21,8 +19,11 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+
 public final class X509CaUtils {
     private static final Logger log = LoggerFactory.getLogger(X509CaUtils.class);
+    private static final SecureRandom RNG = new SecureRandom();
+
     // ---------- Common helpers ----------
 
     public record Validity(Instant now, Instant notBefore, Instant notAfter) {}
@@ -79,19 +80,8 @@ public final class X509CaUtils {
         return new JcaContentSignerBuilder(sigAlg).setProvider("BC").build(key);
     }
 
-    public static String buildDn(RootCaRequest r) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CN=").append(escape(r.commonName));
-        if (notBlank(r.organization))        sb.append(", O=").append(escape(r.organization));
-        if (notBlank(r.organizationalUnit))  sb.append(", OU=").append(escape(r.organizationalUnit));
-        if (notBlank(r.locality))            sb.append(", L=").append(escape(r.locality));
-        if (notBlank(r.state))               sb.append(", ST=").append(escape(r.state));
-        if (notBlank(r.country))             sb.append(", C=").append(escape(r.country));
-        return sb.toString();
-    }
-
-    private static boolean notBlank(String s){ return s != null && !s.isBlank(); }
-    private static String  escape (String v){ return v.replace(",", "\\,"); }
+    public static boolean notBlank(String s){ return s != null && !s.isBlank(); }
+    public static String  escape (String v){ return v.replace(",", "\\,"); }
 
     public static Integer extractKeySize(PublicKey pk) {
         try {
@@ -185,9 +175,10 @@ public final class X509CaUtils {
 
     // ---------- small utils ----------
 
-    public static BigInteger newSerial(int bits) throws NoSuchAlgorithmException {
-        SecureRandom rnd = SecureRandom.getInstanceStrong();
-        return new BigInteger(bits, rnd).abs();
+    public static BigInteger newSerial(int bits) {
+        BigInteger s;
+        do { s = new BigInteger(bits, RNG).abs(); } while (BigInteger.ZERO.equals(s));
+        return s;
     }
     public static ZonedDateTime nowUtc() { return ZonedDateTime.now(ZoneOffset.UTC); }
 
@@ -198,10 +189,8 @@ public final class X509CaUtils {
     }
     public static String randomStrong(int len) {
         final String alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+";
-        SecureRandom rnd;
-        try { rnd = SecureRandom.getInstanceStrong(); } catch (Exception e) { rnd = new SecureRandom(); }
         StringBuilder sb = new StringBuilder(len);
-        for (int i=0;i<len;i++) sb.append(alphabet.charAt(rnd.nextInt(alphabet.length())));
+        for (int i=0;i<len;i++) sb.append(alphabet.charAt(RNG.nextInt(alphabet.length())));
         return sb.toString();
     }
 }

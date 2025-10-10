@@ -17,7 +17,6 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,8 @@ public class CertificateService {
     @Value("${pki.keystore-dir:./data/keystores}")
     private String keystoreDir;
 
+    private static final SecureRandom RNG = new SecureRandom();
+
     public CertificateService(CertificateRecordRepository repo, CryptoSealService seal, KeyStoreService ks) {
         this.repo = repo; this.seal = seal; this.ks = ks;
     }
@@ -59,7 +60,7 @@ public class CertificateService {
 
     public CertificateRecord createRootCa(RootCaRequest req, String adminEmail) throws Exception {
         KeyPairGenerator kpg = KeyPairGenerator.getInstance(KEY_ALG_RSA);
-        kpg.initialize(3072, SecureRandom.getInstanceStrong());
+        kpg.initialize(3072, RNG);
         KeyPair kp = kpg.generateKeyPair();
 
         String dn = buildDn(req);
@@ -140,7 +141,7 @@ public class CertificateService {
             Integer requestedPathLen = resolvePathLen(issuerCert, req.pathLenConstraint());
 
             KeyPairGenerator kpg = KeyPairGenerator.getInstance(KEY_ALG_RSA);
-            kpg.initialize(4096, SecureRandom.getInstanceStrong());
+            kpg.initialize(4096, RNG);
             KeyPair subjectKP = kpg.generateKeyPair();
 
             X500Name issuerDN  = X500Name.getInstance(issuerCert.getSubjectX500Principal().getEncoded());
@@ -233,6 +234,16 @@ public class CertificateService {
         X509Certificate cert = (X509Certificate) store.getCertificate(rec.getKeystoreAlias());
         if (cert == null) throw new IllegalStateException("Alias not found in keystore: " + rec.getKeystoreAlias());
         return toPem(cert);
+    }
+    private static String buildDn(RootCaRequest r) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("CN=").append(escape(r.commonName));
+        if (notBlank(r.organization))        sb.append(", O=").append(escape(r.organization));
+        if (notBlank(r.organizationalUnit))  sb.append(", OU=").append(escape(r.organizationalUnit));
+        if (notBlank(r.locality))            sb.append(", L=").append(escape(r.locality));
+        if (notBlank(r.state))               sb.append(", ST=").append(escape(r.state));
+        if (notBlank(r.country))             sb.append(", C=").append(escape(r.country));
+        return sb.toString();
     }
 
 
