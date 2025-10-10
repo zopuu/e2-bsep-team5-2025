@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 public record CertificateResponse(
-        String serialNumberHex,
+        String serialNumber,
         String subjectDn,
         String issuerDn,
         Instant notBefore,
