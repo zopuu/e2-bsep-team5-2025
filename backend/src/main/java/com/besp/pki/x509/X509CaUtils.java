@@ -23,7 +23,6 @@ import java.util.*;
 
 public final class X509CaUtils {
     private static final Logger log = LoggerFactory.getLogger(X509CaUtils.class);
-    static { Security.addProvider(new BouncyCastleProvider()); }
     // ---------- Common helpers ----------
 
     public record Validity(Instant now, Instant notBefore, Instant notAfter) {}

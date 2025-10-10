@@ -49,8 +49,6 @@ public class CertificateService {
     @Value("${pki.keystore-dir:./data/keystores}")
     private String keystoreDir;
 
-    static { Security.addProvider(new BouncyCastleProvider()); }
-
     public CertificateService(CertificateRecordRepository repo, CryptoSealService seal, KeyStoreService ks) {
         this.repo = repo; this.seal = seal; this.ks = ks;
     }
