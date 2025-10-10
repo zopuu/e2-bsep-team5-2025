@@ -1,0 +1,59 @@
+<div class="shell" [class.open]="open">
+  <aside class="side">
+    <div class="brand">
+      <button class="burger" (click)="open = !open" aria-label="Toggle nav">☰</button>
+      <span>PKI Admin</span>
+    </div>
+
+    <nav>
+      <div class="group">
+        <div class="label">Overview</div>
+        <a routerLink="dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+          <span class="dot"></span> Dashboard
+        </a>
+      </div>
+
+      <div class="group">
+        <div class="label">Issuance</div>
+        <a routerLink="ca" routerLinkActive="active"><span class="dot"></span> Root CA</a>
+        <a routerLink="ca/intermediate" routerLinkActive="active"><span class="dot"></span> Intermediate CA</a>
+        <a routerLink="csr" routerLinkActive="active">
+          <span class="dot"></span> CSR Queue
+          <span class="badge" *ngIf="pendingCsrs > 0">{{ pendingCsrs }}</span>
+        </a>
+      </div>
+
+      <div class="group">
+        <div class="label">Management</div>
+        <a routerLink="certificates" routerLinkActive="active"><span class="dot"></span> Certificates</a>
+        <a routerLink="revocations" routerLinkActive="active"><span class="dot"></span> Revocations</a>
+        <a routerLink="templates" routerLinkActive="active"><span class="dot"></span> Templates</a>
+        <a routerLink="users" routerLinkActive="active"><span class="dot"></span> CA Users</a>
+      </div>
+
+      <div class="group">
+        <div class="label">Operations</div>
+        <a routerLink="logs" routerLinkActive="active"><span class="dot"></span> Audit Logs</a>
+        <a routerLink="security" routerLinkActive="active"><span class="dot"></span> Security</a>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div class="left">
+        <h1 class="page">{{ pageTitle }}</h1>
+      </div>
+
+      <div class="right">
+        <input class="search" placeholder="Search serial / subject / issuer…" />
+        <button class="btn" routerLink="csr">View CSRs</button>
+        <button class="btn primary" (click)="openCmd()">⌘K Command</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <router-outlet (activate)="onActivate($event)"></router-outlet>
+    </section>
+  </main>
+</div>

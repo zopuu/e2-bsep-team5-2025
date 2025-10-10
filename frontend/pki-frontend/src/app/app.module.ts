@@ -13,6 +13,8 @@ import { HomeComponent } from './components/home/home.component';
 import { AdminComponent } from './components/admin/admin.component';
 import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component';
 import { AdminIntermediateComponent } from './components/admin/admin-intermediate/admin-intermediate.component';
+import { AdminShellComponent } from './components/admin/admin-shell/admin-shell.component';
+import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +25,9 @@ import { AdminIntermediateComponent } from './components/admin/admin-intermediat
     HomeComponent,
     AdminComponent,
     AdminCaComponent,
-    AdminIntermediateComponent
+    AdminIntermediateComponent,
+    AdminShellComponent,
+    AdminDashboardComponent
   ],
   imports: [
     BrowserModule,

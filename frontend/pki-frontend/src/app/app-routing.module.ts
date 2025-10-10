@@ -8,11 +8,30 @@ import { AdminComponent } from './components/admin/admin.component';
 import { AdminGuard } from './guards/admin.guard';
 import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component';
 import { AdminIntermediateComponent } from './components/admin/admin-intermediate/admin-intermediate.component';
+import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
+import { AdminShellComponent } from './components/admin/admin-shell/admin-shell.component';
 
 const routes: Routes = [
-  
+
   { path: '', redirectTo: '/register', pathMatch: 'full' },
-  { path: 'admin', component: AdminComponent, canActivate: [AdminGuard]  },
+  {
+    path: 'admin',
+    component: AdminShellComponent,           // NEW
+    canActivate: [AdminGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: AdminDashboardComponent },     // NEW
+      { path: 'ca', component: AdminCaComponent },                   // existing
+      { path: 'ca/intermediate', component: AdminIntermediateComponent }, // existing
+      // { path: 'certificates', component: AdminCertificatesComponent },    // placeholder
+      // { path: 'csr', component: AdminCsrQueueComponent },                 // placeholder
+      // { path: 'templates', component: AdminTemplatesComponent },          // placeholder
+      // { path: 'users', component: AdminUsersComponent },                  // placeholder
+      // { path: 'revocations', component: AdminRevocationsComponent },      // placeholder
+      // { path: 'logs', component: AdminLogsComponent },                    // placeholder
+      // { path: 'security', component: AdminSecurityComponent }             // placeholder
+    ]
+  },
   { path: 'register', component: RegistrationComponent },
   { path: 'login', component: LoginComponent },
   { path: 'activate', component: ActivationComponent },

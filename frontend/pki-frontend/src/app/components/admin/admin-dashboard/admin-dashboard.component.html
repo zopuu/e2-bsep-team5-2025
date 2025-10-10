@@ -1,0 +1,49 @@
+<div class="wrap">
+  <h2 class="muted">Control Center</h2>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">{{ kpi.pendingCsrs }}</div><div>Pending CSRs</div></div>
+    <div class="kpi"><div class="n">{{ kpi.expiring30d }}</div><div>Expiring ≤ 30d</div></div>
+    <div class="kpi"><div class="n">{{ kpi.revokedToday }}</div><div>Revoked today</div></div>
+    <div class="kpi"><div class="n">{{ kpi.activeCas }}</div><div>Active CAs</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Pending CSRs TODO stuff below</h3>
+      <ul>
+        <li *ngFor="let r of pendingCsrs | slice:0:5">
+          <!-- {{ r.parsedSubject }} — {{ r.userEmail }} — {{ r.createdAt | date:'short' }} -->
+        </li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Expiring in 30 days</h3>
+      <ul>
+        <li *ngFor="let c of expiring | slice:0:5">
+          <!-- {{ c.subjectDn }} — {{ c.notAfter | date:'shortDate' }} -->
+        </li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Recent activity</h3>
+      <ul>
+        <li *ngFor="let e of events | slice:0:7">
+          <!-- {{ e.timestamp | date:'short' }} — {{ e.actor }} — {{ e.message }} -->
+        </li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Quick actions</h3>
+      <div class="quick">
+        <button class="btn" routerLink="/admin/ca">New Root CA</button>
+        <button class="btn" routerLink="/admin/ca/intermediate">New Intermediate</button>
+        <button class="btn" routerLink="/admin/templates">New Template</button>
+        <button class="btn primary" routerLink="/admin/csr">Review CSRs</button>
+      </div>
+    </div>
+  </div>
+</div>

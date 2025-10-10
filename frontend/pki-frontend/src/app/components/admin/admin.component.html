@@ -1,14 +1,51 @@
-<div class="container" style="max-width: 900px; margin: 24px auto;">
+<div class="admin-wrap">
   <h1>Admin Panel</h1>
-  <p>Only admins can view this page.</p>
+  <p class="muted">Only admins can view this page.</p>
 
-  <!-- priprema za root CA akciju -->
-  <section style="margin-top: 24px;">
-    <h3>Create Root CA</h3>
-    <button class="btn btn-primary" routerLink="/admin/ca">Open CA tools</button>
-  </section>
-  <section style="margin-top: 24px;">
-    <h3>Create Intermediate CA</h3>
-    <button class="btn btn-primary" routerLink="/admin/ca/intermediate">Open Intermediate tools</button>
+  <section class="grid">
+    <a class="card action" routerLink="/admin/ca">
+      <h3>Root CA</h3>
+      <p>Create a self-signed Root CA.</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/ca/intermediate">
+      <h3>Intermediate CA</h3>
+      <p>Issue CA under an existing issuer.</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/certificates">
+      <h3>Certificates</h3>
+      <p>Browse, download, revoke.</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/csr">
+      <h3>CSR Requests</h3>
+      <p>Review uploaded CSRs and issue EE.</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/templates">
+      <h3>Templates</h3>
+      <p>CN/SAN regex, TTL, KU/EKU.</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/users">
+      <h3>CA Users</h3>
+      <p>Add CA users (first-time password).</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/revocations">
+      <h3>Revocations</h3>
+      <p>CRL/OCSP & revoke with reason.</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/logs">
+      <h3>Audit Logs</h3>
+      <p>Security events & rotations.</p>
+    </a>
+
+    <a class="card action" routerLink="/admin/security">
+      <h3>Security</h3>
+      <p>HTTPS status, hardening notes.</p>
+    </a>
   </section>
 </div>
