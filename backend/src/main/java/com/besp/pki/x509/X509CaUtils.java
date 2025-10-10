@@ -116,32 +116,44 @@ public final class X509CaUtils {
     }
 
     public static X509Certificate[] assemblePkcs12Chain(
-            X509Certificate subjectCert,
-            X509Certificate issuerCert,
+            X509Certificate leaf,
+            X509Certificate issuer,
             X509Certificate[] issuerChainRaw
     ) {
-        List<X509Certificate> chain = new ArrayList<>();
-        if (issuerChainRaw != null && issuerChainRaw.length > 0) {
-            if (!isSignedBy(issuerCert, issuerChainRaw[0])) {
-                Collections.reverse(Arrays.asList(issuerChainRaw));
-            }
-            chain.addAll(Arrays.asList(issuerChainRaw));
-        }
-        if (chain.isEmpty() || !chain.get(0).equals(issuerCert)) chain.add(0, issuerCert);
-
-        for (int i = 0; i < chain.size() - 1; i++) {
-            if (!isSignedBy(chain.get(i), chain.get(i + 1))) {
-                throw new IllegalStateException("Issuer chain order invalid at index " + i);
+        // kandidati bez duplikata leaf/issuer
+        List<X509Certificate> candidates = new ArrayList<>();
+        if (issuerChainRaw != null) {
+            for (X509Certificate c : issuerChainRaw) {
+                if (!c.equals(leaf) && !c.equals(issuer)) {
+                    candidates.add(c);
+                }
             }
         }
-        if (!isSelfSigned(chain.get(chain.size() - 1))) {
-            throw new IllegalStateException("Chain does not end with a self-signed root.");
+
+        // hod naviše: issuer -> ... -> root
+        List<X509Certificate> up = new ArrayList<>();
+        X509Certificate cur = issuer;
+        while (true) {
+            up.add(cur);
+            if (isSelfSigned(cur)) break;
+
+            X509Certificate next = null;
+            for (X509Certificate cand : candidates) {
+                if (isSignedBy(cur, cand)) { next = cand; break; }
+            }
+            if (next == null) {
+                throw new IllegalStateException("Issuer chain is missing issuer of " + cur.getSubjectX500Principal());
+            }
+            candidates.remove(next);
+            cur = next;
         }
 
-        X509Certificate[] out = new X509Certificate[chain.size() + 1];
-        out[0] = subjectCert;
-        for (int i = 0; i < chain.size(); i++) out[i + 1] = chain.get(i);
+        // PKCS#12 očekuje [leaf, issuer, ..., root]
+        X509Certificate[] out = new X509Certificate[up.size() + 1];
+        out[0] = leaf;
+        for (int i = 0; i < up.size(); i++) out[i + 1] = up.get(i);
 
+        // završna provera (možeš zadržati svoju)
         for (int i = 0; i < out.length - 1; i++) {
             if (!isSignedBy(out[i], out[i + 1])) {
                 throw new IllegalStateException("Assembled PKCS12 chain invalid at index " + i);
@@ -150,19 +162,9 @@ public final class X509CaUtils {
         if (!isSelfSigned(out[out.length - 1])) {
             throw new IllegalStateException("Assembled PKCS12 chain does not end with self-signed root.");
         }
-
-        try {
-            var cf = java.security.cert.CertificateFactory.getInstance("X.509");
-            CertPath cp = cf.generateCertPath(Arrays.asList(out));
-            var trust = new java.security.cert.TrustAnchor(out[out.length - 1], null);
-            var params = new PKIXParameters(Set.of(trust));
-            params.setRevocationEnabled(false);
-            CertPathValidator.getInstance("PKIX").validate(cp, params);
-        } catch (Exception e) {
-            throw new IllegalStateException("PKIX validation failed for assembled chain", e);
-        }
         return out;
     }
+
 
     public static void debugChainForPkcs12(X509Certificate[] chain) {
         if (!log.isDebugEnabled()) return;

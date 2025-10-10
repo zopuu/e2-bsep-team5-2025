@@ -133,6 +133,11 @@ public class CertificateService {
             char[] issuerPass = seal.unseal(issuerRec.getEncKeystorePass()).toCharArray();
             X509Certificate issuerCert = ks.readCertificate(issuerRec.getKeystorePath(), issuerRec.getKeystoreAlias(), issuerPass);
             X509Certificate[] issuerChain = ks.readChain(issuerRec.getKeystorePath(), issuerRec.getKeystoreAlias(), issuerPass);
+            for (int i=0;i<issuerChain.length;i++) {
+                log.debug("issuerChainRaw[{}] SUBJ={} ISSR={}", i,
+                        issuerChain[i].getSubjectX500Principal(),
+                        issuerChain[i].getIssuerX500Principal());
+            }
             PrivateKey issuerKey = ks.readPrivateKey(issuerRec.getKeystorePath(), issuerRec.getKeystoreAlias(), issuerPass);
 
             var validity = validityOf(req.yearsValid());
