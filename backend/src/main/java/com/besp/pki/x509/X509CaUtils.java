@@ -1,7 +1,6 @@
 package com.besp.pki.x509;
 
 import com.besp.pki.dto.RootCaRequest;
-import com.besp.pki.entity.CertificateRecord;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
@@ -11,10 +10,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.StringWriter;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidator;
