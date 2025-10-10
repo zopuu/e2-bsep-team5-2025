@@ -1,1 +1,15 @@
-/backend/target/
+# Maven / Java
+target/
+**/target/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
+*.tmp
