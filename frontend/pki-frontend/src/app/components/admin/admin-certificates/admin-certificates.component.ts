@@ -88,11 +88,18 @@ export class AdminCertificatesComponent implements OnInit {
     });
   }
 
-  viewChain(row: CertificateListItem) {
-    this.api.getChain(row.id).subscribe(info => {
-      this.toast.open(`Subject: ${info.subject}\nIssuer: ${info.issuer}`, 'OK', { duration: 5000 });
+  viewChain(row: any) {
+    this.api.getChain(row.id).subscribe({
+      next: (info) => {
+        const chainText = (info.chain && info.chain.length > 0)
+          ? info.chain.join('  →  ')
+          : `${info.subject}  →  ${info.issuer}`;
+        this.toast.open(chainText, 'OK', { duration: 6000 });
+      },
+      error: () => this.toast.open('Failed to load chain', 'Dismiss', { duration: 3000 })
     });
   }
+
 
   revoke(row: CertificateListItem) {
     const reason: RevokeRequest['reason'] = 'UNSPECIFIED';

@@ -300,6 +300,25 @@ public class CertificateService {
                 p.getSize()
         );
     }
+    public CertificateChainDto readChain(long id) throws Exception {
+        var rec = repo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Certificate not found: " + id));
+
+        List<String> subjects;
+
+        if (rec.getKeystorePath() != null && rec.getKeystoreAlias() != null && rec.getEncKeystorePass() != null) {
+            char[] pass = seal.unseal(rec.getEncKeystorePass()).toCharArray();
+            X509Certificate[] chain = ks.readChain(rec.getKeystorePath(), rec.getKeystoreAlias(), pass);
+            subjects = Arrays.stream(chain)
+                    .map(c -> c.getSubjectX500Principal().getName())
+                    .toList();
+        } else {
+            // fallback: at least return the leaf subject
+            subjects = List.of(rec.getSubjectDn());
+        }
+
+        return new CertificateChainDto(rec.getId(), rec.getSubjectDn(), rec.getIssuerDn(), subjects);
+    }
 
 
 }

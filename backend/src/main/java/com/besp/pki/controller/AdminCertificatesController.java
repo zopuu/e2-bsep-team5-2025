@@ -1,9 +1,6 @@
 package com.besp.pki.controller;
 
-import com.besp.pki.dto.CertificateListItem;
-import com.besp.pki.dto.IntermediateCaRequest;
-import com.besp.pki.dto.PagedResponse;
-import com.besp.pki.dto.RootCaRequest;
+import com.besp.pki.dto.*;
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
 import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.entity.CertificateRecord;
@@ -82,4 +79,10 @@ public class AdminCertificatesController {
     ) {
         return ResponseEntity.ok(service.search(q, type, status, ca, page, size));
     }
+    @GetMapping("/cert/{id}/chain")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CertificateChainDto> getChain(@PathVariable long id) throws Exception {
+        return ResponseEntity.ok(service.readChain(id));
+    }
+
 }
