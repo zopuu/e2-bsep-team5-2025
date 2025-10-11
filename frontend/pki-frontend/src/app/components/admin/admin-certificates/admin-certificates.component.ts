@@ -31,6 +31,8 @@ export class AdminCertificatesComponent implements OnInit {
   displayed: (keyof CertificateListItem | 'actions')[] = [
     'type', 'subjectDn', 'issuerDn', 'serialNumber', 'status', 'notAfter', 'ca', 'actions'
   ];
+  revokingId: number | null = null;
+  revocationReason: RevokeRequest['reason'] = 'KEY_COMPROMISED';
 
   page = 0; size = 20;
 
@@ -122,6 +124,41 @@ export class AdminCertificatesComponent implements OnInit {
   copy(text?: string | null) {
     if (!text) return;
     navigator.clipboard?.writeText(text);
+  }
+  reasons: RevokeRequest['reason'][] = [
+    'KEY_COMPROMISED',
+    'CA_COMPROMISED',
+    'AFFILIATION_CHANGED',
+    'SUPERSEDED',
+    'CESSATION_OF_OPERATION',
+    'PRIVILEGE_WITHDRAWN',
+    'AA_COMPROMISED',
+    'UNSPECIFIED'
+  ];
+
+  startRevoke(r: CertificateListItem) {
+    this.revokingId = r.id;
+    this.revocationReason = 'KEY_COMPROMISED';
+  }
+
+  cancelRevoke() {
+    this.revokingId = null;
+  }
+
+  confirmRevoke(r: CertificateListItem) {
+    this.api.revokeCertificate(r.id, { reason: this.revocationReason }).subscribe({
+      next: () => {
+        this.toast.open('Certificate revoked', 'OK', { duration: 2000 });
+        this.revokingId = null;
+        this.load();
+      },
+      error: () => this.toast.open('Revocation failed', 'Dismiss', { duration: 3000 })
+    });
+  }
+
+  // helper to pretty-print REASON_NAME → "REASON NAME"
+  prettyReason(reason?: string | null) {
+    return reason ? reason.split('_').join(' ') : '';
   }
 
 }

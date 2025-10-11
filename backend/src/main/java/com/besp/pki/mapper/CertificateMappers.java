@@ -21,7 +21,9 @@ public final class CertificateMappers {
                 r.getStatus(),
                 r.getType(),
                 r.getKeySize(),
-                r.getFingerprintSha256()
+                r.getFingerprintSha256(),
+                r.getRevocationReason(),
+                r.getRevocationDate()
         );
     }
 }

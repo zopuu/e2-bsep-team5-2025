@@ -75,6 +75,7 @@ export class AdminApiService {
     });
   }
 
+
   getChain(id: number) {
     return this.http.get<{ id: number; subject: string; issuer: string; chain: string[] }>(
       `${this.apiUrl}/api/admin/cert/${id}/chain`,

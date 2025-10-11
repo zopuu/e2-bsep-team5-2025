@@ -141,3 +141,66 @@ mat-paginator { margin-top: 4px; background: transparent !important; color: inhe
   &:hover { background: rgba(255,255,255,.06); border-color: var(--hairline); }
   &:active { transform: translateY(1px); }
 }
+.revoke-panel {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+
+  // Better-looking dark-friendly select
+  select {
+    // reset native styles & add room for a custom chevron
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    height: 36px;
+    line-height: 36px;
+    padding: 0 2.2rem 0 .75rem;   // extra right space for arrow
+    border-radius: 10px;
+    border: 1px solid var(--hairline);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.08)) padding-box,
+      // chevron (SVG data URI; %23 = '#', so it works in CSS)
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%23bcd3ff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M1 1l5 5 5-5'/></svg>") no-repeat right .6rem center / 12px 8px,
+      rgba(255,255,255,.04);
+    color: inherit;
+    cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+
+    &:hover {
+      border-color: rgba(188, 211, 255, .55);     // subtle hover
+      background-color: rgba(255,255,255,.06);
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-color: var(--accent, #6aa8ff);
+      box-shadow: 0 0 0 3px rgba(106, 168, 255, .25);
+    }
+
+    &:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    // optional: make it match the pill sizes in your UI
+    &.sm { height: 32px; line-height: 32px; padding-right: 2rem; }
+    &.lg { height: 40px; line-height: 40px; padding-right: 2.4rem; }
+  }
+
+  // (Edge/IE legacy arrow)
+  select::-ms-expand { display: none; }
+}
+
+/* Dropdown list styling support varies by OS/engine,
+   but these help in Chromium/Firefox */
+.revoke-panel select option {
+  background: #0b2b55;     /* pick a surface close to your card bg */
+  color: #e9f1ff;
+}
+
+/* Keep your existing note */
+.revoked-note { display: flex; gap: 8px; align-items: center; }
+
+

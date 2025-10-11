@@ -62,6 +62,10 @@
     <div class="row-right">
       <div class="badges">
         <span class="chip" [class.revoked]="r.status==='REVOKED'" [class.expired]="isExpired(r)">{{ r.status }}</span>
+        <span class="chip revoked" *ngIf="r.status==='REVOKED' && r.revocationReason">
+          {{ prettyReason(r.revocationReason) }}
+        </span>
+
         <ng-container *ngIf="r.ca; else notCa">
           <span class="chip ca">CA</span>
           <span class="muted small" *ngIf="r.pathLenConstraint !== null">pathLen={{ r.pathLenConstraint }}</span>
@@ -75,10 +79,35 @@
       </div>
 
       <div class="actions">
+        <!-- Download / Chain -->
         <button class="btn text" type="button" (click)="downloadPem(r)">Download PEM</button>
         <button class="btn text" type="button" (click)="viewChain(r)">View chain</button>
-        <button class="btn danger" type="button" (click)="revoke(r)" [disabled]="r.status==='REVOKED'">Revoke</button>
+
+        <!-- If not revoked yet: show Revoke / inline panel -->
+        <ng-container *ngIf="r.status !== 'REVOKED';">
+          <ng-container *ngIf="revokingId === r.id; else revokeBtn">
+            <div class="revoke-panel">
+              <select #reasonSel (change)="revocationReason = $any(reasonSel.value)">
+                <option *ngFor="let rs of reasons" [value]="rs">{{ prettyReason(rs) }}</option>
+              </select>
+
+              <div class="actions">
+                <button class="btn danger" type="button" (click)="confirmRevoke(r)">Confirm</button>
+                <button class="btn" type="button" (click)="cancelRevoke()">Cancel</button>
+              </div>
+            </div>
+
+
+          </ng-container>
+          <ng-template #revokeBtn>
+            <button class="btn danger" type="button" (click)="startRevoke(r)">Revoke</button>
+          </ng-template>
+        </ng-container>
+
+        <!-- If already revoked: show reason -->
+
       </div>
+
 
     </div>
   </div>

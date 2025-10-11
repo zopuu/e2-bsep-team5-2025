@@ -16,6 +16,8 @@ export interface CertificateListItem {
   type: CertificateType;
   keySize?: number | null;
   fingerprintSha256: string;
+  revocationReason?: string | null;
+  revocationDate?: string | null;
 }
 
 export interface PagedResponse<T> {
@@ -27,6 +29,6 @@ export interface PagedResponse<T> {
 }
 
 export interface RevokeRequest {
-  reason: 'UNSPECIFIED' | 'KEY_COMPROMISE' | 'CA_COMPROMISE' | 'AFFILIATION_CHANGED' |
+  reason: 'UNSPECIFIED' | 'KEY_COMPROMISED' | 'CA_COMPROMISED' | 'AFFILIATION_CHANGED' |
           'SUPERSEDED' | 'CESSATION_OF_OPERATION' | 'CERTIFICATE_HOLD' | 'PRIVILEGE_WITHDRAWN' | 'REMOVE_FROM_CRL' | 'AA_COMPROMISED';
 }

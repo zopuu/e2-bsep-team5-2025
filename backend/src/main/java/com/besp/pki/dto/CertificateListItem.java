@@ -2,6 +2,7 @@ package com.besp.pki.dto;
 
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
 import com.besp.pki.entity.CertificateEnums.CertificateType;
+import com.besp.pki.entity.CertificateEnums.RevocationReason;
 
 import java.time.Instant;
 
@@ -19,5 +20,7 @@ public record CertificateListItem(
         CertificateStatus status,
         CertificateType type,
         Integer keySize,
-        String fingerprintSha256
+        String fingerprintSha256,
+        RevocationReason revocationReason,
+        Instant revocationDate
 ) {}

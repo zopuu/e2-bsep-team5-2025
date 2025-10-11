@@ -3,6 +3,7 @@ package com.besp.pki.controller;
 import com.besp.pki.dto.*;
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
 import com.besp.pki.entity.CertificateEnums.CertificateType;
+import com.besp.pki.entity.CertificateEnums.RevocationReason;
 import com.besp.pki.entity.CertificateRecord;
 import com.besp.pki.service.CertificateService;
 import jakarta.validation.Valid;
@@ -83,6 +84,15 @@ public class AdminCertificatesController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CertificateChainDto> getChain(@PathVariable long id) throws Exception {
         return ResponseEntity.ok(service.readChain(id));
+    }
+    @PostMapping("/cert/{id}/revoke")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> revoke(@PathVariable long id,
+                                       @Valid @RequestBody RevokeRequest req,
+                                       Authentication auth) {
+        String by = (auth != null ? auth.getName() : "admin");
+        service.revoke(id, RevocationReason.valueOf(req.reason().name()), by);
+        return ResponseEntity.noContent().build(); // 204
     }
 
 }

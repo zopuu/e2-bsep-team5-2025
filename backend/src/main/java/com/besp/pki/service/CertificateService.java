@@ -3,6 +3,7 @@ package com.besp.pki.service;
 import static com.besp.pki.x509.X509CaUtils.*;
 
 import com.besp.pki.dto.*;
+import com.besp.pki.entity.CertificateEnums.RevocationReason;
 import com.besp.pki.mapper.CertificateMappers;
 import  com.besp.pki.x509.X500Util;
 import static com.besp.pki.x509.PemUtil.*;
@@ -33,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -318,6 +320,25 @@ public class CertificateService {
         }
 
         return new CertificateChainDto(rec.getId(), rec.getSubjectDn(), rec.getIssuerDn(), subjects);
+    }
+    @Transactional
+    public void revoke(long id, RevocationReason reason, String revokedBy) {
+        var rec = repo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Certificate not found: " + id));
+
+        if (rec.getStatus() == CertificateStatus.REVOKED) {
+            return; // idempotent
+        }
+
+        rec.setStatus(CertificateStatus.REVOKED);
+        rec.setRevocationReason(reason);
+        rec.setRevocationDate(Instant.now());
+        rec.setUpdatedAt(Instant.now());
+        // optional audit breadcrumb
+        String by = (revokedBy == null ? "admin" : revokedBy);
+        rec.setCreatedBy((rec.getCreatedBy() == null ? "" : rec.getCreatedBy()) + " | revoked by " + by);
+
+        repo.save(rec);
     }
 
 
