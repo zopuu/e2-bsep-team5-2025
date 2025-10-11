@@ -1,9 +1,10 @@
 // components/admin/admin-intermediate/admin-intermediate.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { AdminApiService, CertificateListItem } from '../../../services/admin.service';
+import { AdminApiService } from '../../../services/admin.service';
 import { AuthService } from '../../../services/auth.service';
 import { notBeyondIssuerValidator, pathLenWithinIssuerValidator } from '../../../validators/certificate-validators';
+import { CertificateListItem } from '../../../models/certificate';
 
 interface IssuerOption {
   id: number;
@@ -43,7 +44,10 @@ export class AdminIntermediateComponent implements OnInit {
   }, {
     validators: [
       notBeyondIssuerValidator(() => this.selectedIssuer ? new Date(this.selectedIssuer.notAfter) : null),
-      pathLenWithinIssuerValidator(() => this.selectedIssuer ? this.selectedIssuer.pathLenConstraint : null),
+      pathLenWithinIssuerValidator(() => {
+        const plc = this.selectedIssuer?.pathLenConstraint;
+        return plc !== undefined ? plc : null;
+      }),
     ]
   });
 

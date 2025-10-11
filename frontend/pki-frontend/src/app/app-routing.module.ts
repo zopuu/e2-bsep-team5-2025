@@ -10,6 +10,7 @@ import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component
 import { AdminIntermediateComponent } from './components/admin/admin-intermediate/admin-intermediate.component';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
 import { AdminShellComponent } from './components/admin/admin-shell/admin-shell.component';
+import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
 
 const routes: Routes = [
 
@@ -23,7 +24,7 @@ const routes: Routes = [
       { path: 'dashboard', component: AdminDashboardComponent },     // NEW
       { path: 'ca', component: AdminCaComponent },                   // existing
       { path: 'ca/intermediate', component: AdminIntermediateComponent }, // existing
-      // { path: 'certificates', component: AdminCertificatesComponent },    // placeholder
+      { path: 'certificates', component: AdminCertificatesComponent },    // placeholder
       // { path: 'csr', component: AdminCsrQueueComponent },                 // placeholder
       // { path: 'templates', component: AdminTemplatesComponent },          // placeholder
       // { path: 'users', component: AdminUsersComponent },                  // placeholder

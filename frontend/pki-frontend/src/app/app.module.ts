@@ -15,6 +15,16 @@ import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component
 import { AdminIntermediateComponent } from './components/admin/admin-intermediate/admin-intermediate.component';
 import { AdminShellComponent } from './components/admin/admin-shell/admin-shell.component';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
+import { MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
+
 
 @NgModule({
   declarations: [
@@ -27,13 +37,22 @@ import { AdminDashboardComponent } from './components/admin/admin-dashboard/admi
     AdminCaComponent,
     AdminIntermediateComponent,
     AdminShellComponent,
-    AdminDashboardComponent
+    AdminDashboardComponent,
+    AdminCertificatesComponent
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     AppRoutingModule,
     ReactiveFormsModule,
-    HttpClientModule
+    HttpClientModule,
+    CommonModule,
+    RouterModule,
+    MatPaginatorModule,
+    ReactiveFormsModule,
+    MatSnackBarModule,
+    MatPaginatorModule,
+    MatDialogModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }

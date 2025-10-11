@@ -1,0 +1,88 @@
+<div class="toolbar">
+  <form (ngSubmit)="load()" class="filters filters-card" [formGroup]="filters">
+    <input formControlName="q" placeholder="Search subject / issuer / serial…" />
+    <select formControlName="type">
+      <option value="">Type: any</option>
+      <option value="ROOT">ROOT</option>
+      <option value="INTERMEDIATE">INTERMEDIATE</option>
+      <option value="EE">EE</option>
+    </select>
+    <select formControlName="status">
+      <option value="">Status: any</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="REVOKED">REVOKED</option>
+      <option value="EXPIRED">EXPIRED</option>
+    </select>
+    <select formControlName="ca">
+      <option value="">CA: any</option>
+      <option value="true">CA only</option>
+      <option value="false">EE only</option>
+    </select>
+    <button class="btn primary" type="submit">Apply</button>
+    <button class="btn" type="button" (click)="resetFilters()">Reset</button>
+  </form>
+</div>
+
+<div class="list" *ngIf="!loading; else busy">
+  <div class="row-card" *ngFor="let r of data">
+    <div class="row-left">
+      <div class="type">
+        <span class="pill" [class.root]="r.type==='ROOT'" [class.int]="r.type==='INTERMEDIATE'" [class.ee]="r.type==='EE'">
+          {{ r.type }}
+        </span>
+      </div>
+
+      <div class="line">
+        <span class="label">Subject</span>
+        <span class="value dn">{{ r.subjectDn }}</span>
+      </div>
+
+      <div class="line">
+        <span class="label">Issuer</span>
+        <span class="value dn">{{ r.issuerDn }}</span>
+      </div>
+
+      <div class="meta">
+        <span class="mono">SN {{ r.serialNumber }}</span>
+        <span class="muted mono" *ngIf="r.fingerprintSha256">{{ r.fingerprintSha256 | slice:0:12 }}…</span>
+      </div>
+    </div>
+
+    <div class="row-right">
+      <div class="badges">
+        <span class="chip" [class.revoked]="r.status==='REVOKED'" [class.expired]="isExpired(r)">{{ r.status }}</span>
+        <ng-container *ngIf="r.ca; else notCa">
+          <span class="chip ca">CA</span>
+          <span class="muted small" *ngIf="r.pathLenConstraint !== null">pathLen={{ r.pathLenConstraint }}</span>
+        </ng-container>
+        <ng-template #notCa><span class="chip">EE</span></ng-template>
+      </div>
+
+      <div class="valid">
+        <span class="label">Valid to</span>
+        <span class="value" [class.expired]="isExpired(r)">{{ r.notAfter | date:'yyyy-MM-dd HH:mm' }}</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" (click)="downloadPem(r)" title="Download PEM">⬇</button>
+        <button class="btn ghost" (click)="viewChain(r)" title="View chain">⛓</button>
+        <button class="btn danger" (click)="revoke(r)" [disabled]="r.status==='REVOKED'">Revoke</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty" *ngIf="data.length === 0">No certificates match your filters.</div>
+
+  <mat-paginator
+    [length]="total"
+    [pageIndex]="page"
+    [pageSize]="size"
+    [pageSizeOptions]="[10,20,50]"
+    (page)="onPage($event)">
+  </mat-paginator>
+</div>
+
+
+<ng-template #busy>
+  <div class="loading">Loading certificates…</div>
+</ng-template>

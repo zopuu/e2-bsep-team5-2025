@@ -1,7 +1,11 @@
 package com.besp.pki.controller;
 
+import com.besp.pki.dto.CertificateListItem;
 import com.besp.pki.dto.IntermediateCaRequest;
+import com.besp.pki.dto.PagedResponse;
 import com.besp.pki.dto.RootCaRequest;
+import com.besp.pki.entity.CertificateEnums.CertificateStatus;
+import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.entity.CertificateRecord;
 import com.besp.pki.service.CertificateService;
 import jakarta.validation.Valid;
@@ -60,9 +64,22 @@ public class AdminCertificatesController {
         String createdBy = auth != null ? auth.getName() : "unknown";
         return ResponseEntity.ok(certificateService.issueIntermediateCA(req,createdBy));
     }
+    /*
     @GetMapping("/certificates")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> listAll() {
         return ResponseEntity.ok(service.findAll());
+    } */
+    @GetMapping("/certificates")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PagedResponse<CertificateListItem>> listPaged(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) CertificateType type,
+            @RequestParam(required = false) CertificateStatus status,
+            @RequestParam(required = false) Boolean ca,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(service.search(q, type, status, ca, page, size));
     }
 }

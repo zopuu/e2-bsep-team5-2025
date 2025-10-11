@@ -1,12 +1,12 @@
 package com.besp.pki.service;
 
 import static com.besp.pki.x509.X509CaUtils.*;
+
+import com.besp.pki.dto.*;
+import com.besp.pki.mapper.CertificateMappers;
 import  com.besp.pki.x509.X500Util;
 import static com.besp.pki.x509.PemUtil.*;
 
-import com.besp.pki.dto.CertificateResponse;
-import com.besp.pki.dto.IntermediateCaRequest;
-import com.besp.pki.dto.RootCaRequest;
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
 import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.entity.CertificateRecord;
@@ -21,6 +21,11 @@ import org.bouncycastle.operator.ContentSigner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigInteger;
@@ -261,6 +266,39 @@ public class CertificateService {
         if (notBlank(r.state))               sb.append(", ST=").append(escape(r.state));
         if (notBlank(r.country))             sb.append(", C=").append(escape(r.country));
         return sb.toString();
+    }
+    public PagedResponse<CertificateListItem> search(
+            String q,
+            CertificateType type,
+            CertificateStatus status,
+            Boolean ca,
+            int page, int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Specification<CertificateRecord> spec = Specification.where(null);
+
+        if (q != null && !q.isBlank()) {
+            String like = "%" + q.toLowerCase().trim() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("serialNumber")), like),
+                    cb.like(cb.lower(root.get("subjectDn")), like),
+                    cb.like(cb.lower(root.get("issuerDn")), like)
+            ));
+        }
+        if (type != null)   spec = spec.and((r, qy, cb) -> cb.equal(r.get("type"), type));
+        if (status != null) spec = spec.and((r, qy, cb) -> cb.equal(r.get("status"), status));
+        if (ca != null)     spec = spec.and((r, qy, cb) -> cb.equal(r.get("ca"), ca));
+
+        Page<CertificateRecord> p = repo.findAll(spec, pageable);
+
+        return new PagedResponse<>(
+                p.map(CertificateMappers::toListItem).getContent(),
+                p.getTotalElements(),
+                p.getTotalPages(),
+                p.getNumber(),
+                p.getSize()
+        );
     }
 
 

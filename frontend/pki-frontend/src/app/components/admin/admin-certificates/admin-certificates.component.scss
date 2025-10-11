@@ -1,0 +1,110 @@
+:host {
+  display: block;
+  --card: rgba(255, 255, 255, 0.08);
+  --card-strong: rgba(10, 14, 30, 0.55);
+  --card-border: rgba(255, 255, 255, 0.14);
+  --row: rgba(255, 255, 255, 0.06);
+  --row-hover: rgba(255, 255, 255, 0.10);
+  --hairline: rgba(255, 255, 255, 0.12);
+  --muted: #aab2c0;
+}
+
+/* centered filters from before */
+.toolbar { display:flex; justify-content:center; margin: 14px 0 12px; }
+.filters {
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center; max-width:980px; width:100%;
+  &.filters-card {
+    padding:10px 12px; border-radius:14px;
+    border:1px solid var(--card-border);
+    background: linear-gradient(180deg, var(--card) 0%, var(--card-strong) 100%);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  input, select {
+    height:36px; padding:0 12px; min-width:180px; border-radius:10px;
+    border:1px solid var(--hairline); background:rgba(255,255,255,.04); color:inherit; outline:none;
+  }
+  input::placeholder { color: var(--muted); }
+}
+.btn { padding:8px 12px; border-radius:12px; border:1px solid var(--hairline);
+  background:rgba(255,255,255,.04); color:inherit; cursor:pointer;
+  &.primary { background: rgba(88,199,250,.14); border-color: rgba(88,199,250,.35); }
+  &.danger  { background: rgba(255,99,132,.14); border-color: rgba(255,99,132,.35); }
+  &.ghost   { border-color: transparent; background: transparent; }
+}
+
+/* LIST OF ROW CARDS */
+.list { display:flex; flex-direction:column; gap:12px; }
+
+/* one certificate */
+.row-card {
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  background: linear-gradient(180deg, var(--card) 0%, var(--card-strong) 100%);
+  box-shadow: 0 12px 28px rgba(0,0,0,.22);
+}
+.row-card:hover { background: linear-gradient(180deg, var(--row-hover) 0%, var(--card-strong) 100%); }
+
+/* left block = identity */
+.row-left { display:flex; flex-direction:column; gap:8px; }
+.type { margin-bottom: 2px; }
+
+.line { display:flex; gap:10px; align-items:flex-start; }
+.line .label { min-width:64px; color: var(--muted); font-size:.86rem; padding-top:2px; }
+.line .value { flex:1; }
+
+.meta { display:flex; gap:12px; align-items:center; margin-top:2px; color: var(--muted); }
+
+/* right block = status / validity / actions */
+.row-right {
+  display:grid;
+  grid-auto-rows: min-content;
+  grid-template-columns: auto;
+  align-content: start;
+  gap: 10px;
+  min-width: 240px;
+}
+.badges { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.valid  { display:flex; gap:10px; align-items:center; }
+.valid .label { color: var(--muted); min-width:64px; text-align:right; }
+.valid .value { font-weight:600; }
+
+.actions { display:flex; gap:8px; justify-content:flex-end; }
+
+/* typography + chips */
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+.dn { white-space: normal; overflow-wrap: anywhere; } /* keep DNs readable in one block */
+.muted { color: var(--muted); }
+.small { font-size:.82rem; }
+.expired { color: #ffad5a; }
+
+.pill {
+  padding: 4px 8px; border-radius: 999px; font-size: .75rem; font-weight: 700;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  &.root { background: rgba(88,199,250,.18);  border-color: rgba(88,199,250,.35); }
+  &.int  { background: rgba(191,128,255,.18); border-color: rgba(191,128,255,.35); }
+  &.ee   { background: rgba(255,214,102,.18); border-color: rgba(255,214,102,.40); }
+}
+.chip {
+  padding: 3px 8px; border-radius: 999px; font-size:.75rem; font-weight:600;
+  border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06);
+  &.revoked { background: rgba(255, 99, 132, .22); border-color: rgba(255,99,132,.45); }
+  &.expired { background: rgba(255, 159, 64,  .22); border-color: rgba(255,159,64,.45); }
+  &.ca      { background: rgba(75, 192, 192, .22); border-color: rgba(75,192,192,.45); }
+}
+
+.empty { text-align:center; color: var(--muted); padding: 12px 0; }
+
+mat-paginator { margin-top: 4px; background: transparent !important; color: inherit; }
+
+/* responsive */
+@media (max-width: 880px) {
+  .row-card { grid-template-columns: 1fr; }
+  .row-right { grid-template-columns: 1fr; min-width: 0; }
+  .valid .label { min-width: 0; text-align: left; }
+  .actions { justify-content: flex-start; }
+}

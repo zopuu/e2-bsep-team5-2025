@@ -1,20 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Observable } from 'rxjs';
+import { PagedResponse, CertificateListItem, RevokeRequest } from '../models/certificate';
 
-export interface CertificateListItem {
-  id: number;
-  subjectDn: string;
-  issuerDn: string;
-  serialNumber: string;
-  notBefore: string;   // ISO string
-  notAfter: string;    // ISO string
-  ca: boolean;
-  status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
-  type: 'ROOT' | 'INTERMEDIATE' | 'EE' | 'CA';
-  pathLenConstraint: number | null;
-}
 
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
@@ -47,7 +37,6 @@ export class AdminApiService {
     });
   }
   listActiveCaIssuers(): Observable<CertificateListItem[]> {
-    // ako dodaš serverski filter, promijeni na .../certificates?type=CA&status=ACTIVE
     return this.listCertificates();
   }
   createIntermediateCA(body: {
@@ -63,6 +52,31 @@ export class AdminApiService {
     ownerUserId?: number | null;
   }) {
     return this.http.post<any>(`${this.apiUrl}/api/admin/intermediate`, body, {
+      headers: this.authHeaders()
+    });
+  }
+  listCertificatesPaged(params: {
+    q?: string; type?: string; status?: string; ca?: boolean; page?: number; size?: number;
+  }) {
+    let httpParams = new HttpParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') httpParams = httpParams.set(k, String(v));
+    });
+
+    return this.http.get<PagedResponse<CertificateListItem>>(
+      `${this.apiUrl}/api/admin/certificates`,
+      { headers: this.authHeaders(), params: httpParams }
+    );
+  }
+
+  revokeCertificate(id: number, body: RevokeRequest) {
+    return this.http.post<void>(`${this.apiUrl}/api/admin/cert/${id}/revoke`, body, {
+      headers: this.authHeaders()
+    });
+  }
+
+  getChain(id: number) {
+    return this.http.get<{ id: number; subject: string; issuer: string }>(`${this.apiUrl}/api/admin/cert/${id}/chain`, {
       headers: this.authHeaders()
     });
   }
