@@ -39,7 +39,7 @@ export class AdminCertificatesComponent implements OnInit {
     private fb: FormBuilder,
     private dlg: MatDialog,
     private toast: MatSnackBar
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.load();
@@ -61,7 +61,7 @@ export class AdminCertificatesComponent implements OnInit {
         this.total = res.totalElements;
         this.loading = false;
       },
-      error: () => { this.loading = false; this.toast.open('Failed to load certificates', 'Dismiss', {duration: 3000}); }
+      error: () => { this.loading = false; this.toast.open('Failed to load certificates', 'Dismiss', { duration: 3000 }); }
     });
   }
 
@@ -98,8 +98,8 @@ export class AdminCertificatesComponent implements OnInit {
     const reason: RevokeRequest['reason'] = 'UNSPECIFIED';
     // if you want a dialog, wire it here; for now quick action:
     this.api.revokeCertificate(row.id, { reason }).subscribe({
-      next: () => { this.toast.open('Certificate revoked', 'OK', {duration: 2000}); this.load(); },
-      error: () => this.toast.open('Revocation failed', 'Dismiss', {duration: 3000})
+      next: () => { this.toast.open('Certificate revoked', 'OK', { duration: 2000 }); this.load(); },
+      error: () => this.toast.open('Revocation failed', 'Dismiss', { duration: 3000 })
     });
   }
 
@@ -112,4 +112,9 @@ export class AdminCertificatesComponent implements OnInit {
     if (this.isExpired(row)) return 'accent';
     return 'primary';
   }
+  copy(text?: string | null) {
+    if (!text) return;
+    navigator.clipboard?.writeText(text);
+  }
+
 }

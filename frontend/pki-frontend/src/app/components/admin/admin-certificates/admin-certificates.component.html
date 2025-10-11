@@ -27,7 +27,8 @@
   <div class="row-card" *ngFor="let r of data">
     <div class="row-left">
       <div class="type">
-        <span class="pill" [class.root]="r.type==='ROOT'" [class.int]="r.type==='INTERMEDIATE'" [class.ee]="r.type==='EE'">
+        <span class="pill" [class.root]="r.type==='ROOT'" [class.int]="r.type==='INTERMEDIATE'"
+          [class.ee]="r.type==='EE'">
           {{ r.type }}
         </span>
       </div>
@@ -44,8 +45,18 @@
 
       <div class="meta">
         <span class="mono">SN {{ r.serialNumber }}</span>
-        <span class="muted mono" *ngIf="r.fingerprintSha256">{{ r.fingerprintSha256 | slice:0:12 }}…</span>
+        <button class="copy-btn" type="button" (click)="copy(r.serialNumber)" aria-label="Copy serial">Copy</button>
+
+        <span class="sep">•</span>
+
+        <span class="muted mono" [title]="'FP (SHA-256) ' + r.fingerprintSha256">
+          FP {{ r.fingerprintSha256 | slice:0:12 }}<ng-container
+            *ngIf="r.fingerprintSha256?.length && r.fingerprintSha256.length > 12">…</ng-container>
+        </span>
+        <button class="copy-btn" type="button" (click)="copy(r.fingerprintSha256)"
+          aria-label="Copy fingerprint">Copy</button>
       </div>
+
     </div>
 
     <div class="row-right">
@@ -64,20 +75,17 @@
       </div>
 
       <div class="actions">
-        <button class="btn ghost" (click)="downloadPem(r)" title="Download PEM">⬇</button>
-        <button class="btn ghost" (click)="viewChain(r)" title="View chain">⛓</button>
-        <button class="btn danger" (click)="revoke(r)" [disabled]="r.status==='REVOKED'">Revoke</button>
+        <button class="btn text" type="button" (click)="downloadPem(r)">Download PEM</button>
+        <button class="btn text" type="button" (click)="viewChain(r)">View chain</button>
+        <button class="btn danger" type="button" (click)="revoke(r)" [disabled]="r.status==='REVOKED'">Revoke</button>
       </div>
+
     </div>
   </div>
 
   <div class="empty" *ngIf="data.length === 0">No certificates match your filters.</div>
 
-  <mat-paginator
-    [length]="total"
-    [pageIndex]="page"
-    [pageSize]="size"
-    [pageSizeOptions]="[10,20,50]"
+  <mat-paginator [length]="total" [pageIndex]="page" [pageSize]="size" [pageSizeOptions]="[10,20,50]"
     (page)="onPage($event)">
   </mat-paginator>
 </div>

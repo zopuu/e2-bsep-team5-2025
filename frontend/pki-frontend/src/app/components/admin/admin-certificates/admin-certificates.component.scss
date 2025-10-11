@@ -108,3 +108,36 @@ mat-paginator { margin-top: 4px; background: transparent !important; color: inhe
   .valid .label { min-width: 0; text-align: left; }
   .actions { justify-content: flex-start; }
 }
+/* copy button styling */
+.copy-btn {
+  padding: 3px 8px;
+  font-size: .78rem;
+  border-radius: 8px;
+  border: 1px solid var(--hairline);
+  background: rgba(255,255,255,.04);
+  color: inherit;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease, transform .08s ease;
+
+  &:hover { background: rgba(255,255,255,.08); }
+  &:active { transform: translateY(1px); }
+}
+
+.meta { display:flex; gap:8px; align-items:center; color: var(--muted); }
+.sep { opacity:.6; }
+
+/* text-style buttons for actions */
+.actions { display:flex; gap:10px; justify-content:flex-end; }
+
+.btn.text {
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background .12s ease, border-color .12s ease;
+
+  &:hover { background: rgba(255,255,255,.06); border-color: var(--hairline); }
+  &:active { transform: translateY(1px); }
+}
