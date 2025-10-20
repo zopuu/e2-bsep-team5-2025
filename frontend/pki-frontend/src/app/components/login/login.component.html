@@ -13,7 +13,16 @@
 
     <div>
       <label for="password">Password</label>
-      <input id="password" type="password" formControlName="password" />
+      <div class="password-input-wrapper">
+        <input 
+          id="password" 
+          [type]="showPassword ? 'text' : 'password'" 
+          formControlName="password" 
+        />
+        <button type="button" class="toggle-password-btn" (click)="togglePasswordVisibility()">
+          {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+        </button>
+      </div>
       <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
         <small>Password is required</small>
       </div>
@@ -46,6 +55,10 @@
     <button type="submit" [disabled]="isLoading || !captchaSolved">Login</button>
 
     <p *ngIf="message" [class]="messageType">{{ message }}</p>
+
+    <div class="forgot-password-link">
+      <a routerLink="/forgot-password">Forgot Password?</a>
+    </div>
 
     <div class="signup-link">
       <p>Don't have an account? <a routerLink="/register">Sign up</a></p>

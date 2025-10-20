@@ -13,6 +13,7 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   message = '';
   messageType: 'success' | 'error' | '' = '';
+  showPassword = false;
   
   // Custom CAPTCHA
   captchaQuestion: string = '';
@@ -130,5 +131,9 @@ export class LoginComponent implements OnInit {
         this.generateCaptcha();
       }
     });
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 }

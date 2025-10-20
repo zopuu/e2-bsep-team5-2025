@@ -7,6 +7,8 @@ import { HomeComponent } from './components/home/home.component';
 import { AdminComponent } from './components/admin/admin.component';
 import { AdminGuard } from './guards/admin.guard';
 import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 
 const routes: Routes = [
   
@@ -17,6 +19,8 @@ const routes: Routes = [
   { path: 'activate', component: ActivationComponent },
   { path: 'home', component: HomeComponent },
   { path: 'admin/ca', component: AdminCaComponent, canActivate: [AdminGuard] },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: '**', redirectTo: '/register' },
 ];
 

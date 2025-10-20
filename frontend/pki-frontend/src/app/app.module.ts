@@ -12,6 +12,8 @@ import { JwtInterceptor } from './interceptors/jwt.interceptor';
 import { HomeComponent } from './components/home/home.component';
 import { AdminComponent } from './components/admin/admin.component';
 import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +23,9 @@ import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component
     LoginComponent,
     HomeComponent,
     AdminComponent,
-    AdminCaComponent
+    AdminCaComponent,
+    ForgotPasswordComponent,
+    ResetPasswordComponent
   ],
   imports: [
     BrowserModule,

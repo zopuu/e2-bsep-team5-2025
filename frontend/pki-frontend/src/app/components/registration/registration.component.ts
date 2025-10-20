@@ -15,6 +15,8 @@ export class RegistrationComponent implements OnInit {
   isLoading = false;
   message = '';
   messageType: 'success' | 'error' = 'error';
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -150,5 +152,13 @@ export class RegistrationComponent implements OnInit {
       default:
         return '';
     }
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
   }
 }

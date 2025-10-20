@@ -72,15 +72,20 @@
       <!-- Password Field -->
       <div class="form-group">
         <label for="password">Password *</label>
-        <input 
-          type="password" 
-          id="password" 
-          formControlName="password"
-          placeholder="Enter your password"
-          class="form-control"
-          [class.error]="getFieldError('password')"
-          (input)="onPasswordChange()"
-        >
+        <div class="password-input-wrapper">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            id="password" 
+            formControlName="password"
+            placeholder="Enter your password"
+            class="form-control"
+            [class.error]="getFieldError('password')"
+            (input)="onPasswordChange()"
+          >
+          <button type="button" class="toggle-password-btn" (click)="togglePasswordVisibility()">
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
         <div class="error-message" *ngIf="getFieldError('password')">
           {{ getFieldError('password') }}
         </div>
@@ -99,14 +104,19 @@
       <!-- Confirm Password Field -->
       <div class="form-group">
         <label for="confirmPassword">Confirm Password *</label>
-        <input 
-          type="password" 
-          id="confirmPassword" 
-          formControlName="confirmPassword"
-          placeholder="Confirm your password"
-          class="form-control"
-          [class.error]="getFieldError('confirmPassword')"
-        >
+        <div class="password-input-wrapper">
+          <input 
+            [type]="showConfirmPassword ? 'text' : 'password'" 
+            id="confirmPassword" 
+            formControlName="confirmPassword"
+            placeholder="Confirm your password"
+            class="form-control"
+            [class.error]="getFieldError('confirmPassword')"
+          >
+          <button type="button" class="toggle-password-btn" (click)="toggleConfirmPasswordVisibility()">
+            {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
         <div class="error-message" *ngIf="getFieldError('confirmPassword')">
           {{ getFieldError('confirmPassword') }}
         </div>

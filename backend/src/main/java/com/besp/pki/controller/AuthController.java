@@ -128,6 +128,44 @@ public class AuthController {
                 .body(ApiResponse.error("Password validation failed."));
         }
     }
+    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse> forgotPassword(@RequestBody String email) {
+        try {
+            userService.createAndSendPasswordResetToken(email);
+            
+            // Always return success message for security (don't reveal if email exists)
+            return ResponseEntity.ok(ApiResponse.success(
+                "If an account with that email exists, a password reset link has been sent."
+            ));
+            
+        } catch (Exception e) {
+            log.error("Failed to send password reset email", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Failed to process password reset request."));
+        }
+    }
+    
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPassword(@RequestParam String token, @RequestBody String newPassword) {
+        try {
+            boolean reset = userService.resetPassword(token, newPassword);
+            
+            if (reset) {
+                return ResponseEntity.ok(ApiResponse.success(
+                    "Password reset successfully! You can now log in with your new password."
+                ));
+            } else {
+                return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Invalid or expired reset token, or password does not meet requirements."));
+            }
+            
+        } catch (Exception e) {
+            log.error("Password reset failed", e);
+            return ResponseEntity.internalServerError()
+                .body(ApiResponse.error("Password reset failed. Please try again."));
+        }
+    }
 }
 
 
