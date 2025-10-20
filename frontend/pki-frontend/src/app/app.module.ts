@@ -28,6 +28,7 @@ import { ForgotPasswordComponent } from './components/forgot-password/forgot-pas
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { AdminUsersComponent } from './components/admin/admin-users/admin-users.component';
 import { CaIssuersComponent } from './components/ca/ca-issuers/ca-issuers.component';
+import { CaShellComponent } from './components/ca/ca-shell/ca-shell.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { CaIssuersComponent } from './components/ca/ca-issuers/ca-issuers.compon
     ForgotPasswordComponent,
     ResetPasswordComponent,
     AdminUsersComponent,
-    CaIssuersComponent
+    CaIssuersComponent,
+    CaShellComponent
   ],
   imports: [
     BrowserModule,

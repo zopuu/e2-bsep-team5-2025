@@ -16,6 +16,7 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
 import { AdminUsersComponent } from './components/admin/admin-users/admin-users.component';
 import { CaIssuersComponent } from './components/ca/ca-issuers/ca-issuers.component';
 import { CaGuard } from './guards/ca.guard';
+import { CaShellComponent } from './components/ca/ca-shell/ca-shell.component';
 
 const routes: Routes = [
 
@@ -48,7 +49,7 @@ const routes: Routes = [
   { path: 'reset-password', component: ResetPasswordComponent },
   {
     path: 'ca',
-    component: AdminShellComponent,   // reuse admin shell styling
+    component: CaShellComponent,   // reuse admin shell styling
     canActivate: [CaGuard],
     children: [
       { path: '', redirectTo: 'issuers', pathMatch: 'full' },

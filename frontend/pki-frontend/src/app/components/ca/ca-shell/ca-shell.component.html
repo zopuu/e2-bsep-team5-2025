@@ -1,0 +1,59 @@
+<div class="shell" [class.open]="open">
+  <aside class="side">
+    <div class="brand">
+      <button class="burger" (click)="open = !open" aria-label="Toggle nav">☰</button>
+      <span>PKI CA</span>
+    </div>
+
+    <nav>
+      <div class="group">
+        <div class="label">Overview</div>
+        <a routerLink="issuers" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+          <span class="dot"></span> Issuers
+        </a>
+      </div>
+
+      <div class="group">
+        <div class="label">Issuance</div>
+        <!-- Uncomment when routes exist
+        <a routerLink="issue" routerLinkActive="active"><span class="dot"></span> Issue Certificate</a>
+        <a class="disabled"><span class="dot"></span> Issue Intermediate</a>
+        -->
+      </div>
+
+      <div class="group">
+        <div class="label">Management</div>
+        <!-- Uncomment when routes exist
+        <a routerLink="certificates" routerLinkActive="active"><span class="dot"></span> Certificates</a>
+        <a routerLink="templates" routerLinkActive="active"><span class="dot"></span> Templates</a>
+        -->
+      </div>
+
+      <div class="group">
+        <div class="label">Operations</div>
+        <!-- Optional future items:
+        <a routerLink="csr" routerLinkActive="active"><span class="dot"></span> CSR Queue</a>
+        <a routerLink="logs" routerLinkActive="active"><span class="dot"></span> Audit Logs</a>
+        -->
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div class="left">
+        <h1 class="page">{{ title$ | async }}</h1>
+      </div>
+
+      <div class="right">
+        <input class="search" placeholder="Search…" />
+        <button class="btn" routerLink="issuers">Issuers</button>
+        <button class="btn primary" (click)="openCmd()">⌘K Command</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <router-outlet (activate)="onActivate($event)"></router-outlet>
+    </section>
+  </main>
+</div>
