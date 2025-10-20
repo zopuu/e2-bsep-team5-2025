@@ -85,6 +85,40 @@ public class EmailService {
             throw new RuntimeException("Failed to send password reset email", e);
         }
     }
+    public void sendCaUserInviteEmail(String toEmail, String resetToken, String firstName, String organization) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject("You're invited as a CA User — Set your password");
+
+        // Reuse your reset route; front-end can show “Set password” copy for invites
+        String resetUrl = frontendUrl + "/reset-password?token=" + resetToken;
+
+        String emailBody = String.format("""
+            Hello %s,
+
+            A PKI administrator has created a CA User account for you in the organization: %s.
+
+            To start using your account, please set your password here:
+            %s
+
+            • This link is time-limited and can be used once.
+            • After setting your password, you can sign in and manage certificates for your organization's CA chain.
+
+            If you were not expecting this invitation, please ignore this email.
+
+            Best regards,
+            PKI System Team
+            """, firstName, organization, resetUrl);
+
+        message.setText(emailBody);
+
+        try {
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send CA user invite email", e);
+        }
+    }
 }
 
 

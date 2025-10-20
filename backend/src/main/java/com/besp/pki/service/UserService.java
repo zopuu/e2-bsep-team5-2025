@@ -216,9 +216,21 @@ public class UserService {
         caUserSecretService.ensureFor(saved);
 
         // force user to set their own password via email link
-        createAndSendPasswordResetToken(email);
+        createAndSendCaInvite(saved, 24);
 
         return saved;
+    }
+    public void createAndSendCaInvite(User user, int expiresInHours) {
+        // Invalidate previous tokens (reuse your existing pattern)
+        var existingTokens = activationTokenRepository.findActiveTokensByUser(user);
+        for (var t : existingTokens) { t.markAsUsed(); activationTokenRepository.save(t); }
+
+        var token = new ActivationToken();
+        token.setUser(user);
+        token.setExpiresAt(LocalDateTime.now().plusHours(expiresInHours));
+        var saved = activationTokenRepository.save(token);
+
+        emailService.sendCaUserInviteEmail(user.getEmail(), saved.getToken(), user.getFirstName(), user.getOrganization());
     }
 
     // simple generator: A-Z a-z 0-9 and common symbols
