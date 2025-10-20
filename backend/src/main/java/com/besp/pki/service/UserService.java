@@ -4,11 +4,13 @@ import com.besp.pki.entity.ActivationToken;
 import com.besp.pki.entity.User;
 import com.besp.pki.entity.UserRole;
 import com.besp.pki.repository.ActivationTokenRepository;
+import com.besp.pki.repository.CaUserSecretRepository;
 import com.besp.pki.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,17 +24,20 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final PasswordValidationService passwordValidationService;
+    private final CaUserSecretService caUserSecretService;
     
     public UserService(UserRepository userRepository, 
                       ActivationTokenRepository activationTokenRepository,
                       PasswordEncoder passwordEncoder,
                       EmailService emailService,
-                      PasswordValidationService passwordValidationService) {
+                      PasswordValidationService passwordValidationService,
+                       CaUserSecretService caUserSecretService) {
         this.userRepository = userRepository;
         this.activationTokenRepository = activationTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.passwordValidationService = passwordValidationService;
+        this.caUserSecretService = caUserSecretService;
     }
     
     public User registerUser(String email, String password, String firstName, String lastName, String organization) {
@@ -184,6 +189,47 @@ public class UserService {
         activationTokenRepository.save(activationToken);
         
         return true;
+    }
+    public User createCaUser(String email, String firstName, String lastName, String organization) {
+        if (userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email already exists: " + email);
+        }
+
+        User user = new User();
+        user.setEmail(email);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setOrganization(organization);
+        user.setRole(UserRole.CA_USER);
+
+        // strong random password, not shared with the user
+        String randomStrong = generateStrongRandomPassword(24);
+        user.setPassword(passwordEncoder.encode(randomStrong));
+
+        // we trust admin to have verified identity; enable immediately
+        user.setEnabled(true);
+        user.setEmailVerified(true);
+
+        User saved = userRepository.save(user);
+
+        // provision per-user sealed AES key for protecting keystore passwords (optional but recommended)
+        caUserSecretService.ensureFor(saved);
+
+        // force user to set their own password via email link
+        createAndSendPasswordResetToken(email);
+
+        return saved;
+    }
+
+    // simple generator: A-Z a-z 0-9 and common symbols
+    private static String generateStrongRandomPassword(int length) {
+        final String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}:,.?";
+        SecureRandom sr = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(sr.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 }
 

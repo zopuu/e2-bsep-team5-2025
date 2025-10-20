@@ -31,4 +31,9 @@ public class CaUserSecret {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    public CaUserSecret(User user, String sealedKey) {
+        this.user = user;
+        this.sealedKey = sealedKey;
+    }
 }
