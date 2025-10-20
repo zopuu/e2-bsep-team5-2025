@@ -26,6 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { ResetPasswordComponent } from './components/reset-password/reset-passwo
     AdminDashboardComponent,
     AdminCertificatesComponent,
     ForgotPasswordComponent,
-    ResetPasswordComponent
+    ResetPasswordComponent,
+    ActiveSessionsComponent
   ],
   imports: [
     BrowserModule,
