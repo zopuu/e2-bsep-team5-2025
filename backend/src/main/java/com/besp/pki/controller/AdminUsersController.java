@@ -2,6 +2,7 @@ package com.besp.pki.controller;
 
 import com.besp.pki.dto.ApiResponse;
 import com.besp.pki.dto.CreateCaUserRequest;
+import com.besp.pki.dto.UserDto;
 import com.besp.pki.entity.User;
 import com.besp.pki.service.UserService;
 import jakarta.validation.Valid;
@@ -9,14 +10,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/users")
-@CrossOrigin(origins = "$cors.allowed-origins")
+@CrossOrigin(origins = "${cors.allowed-origins}")
 public class AdminUsersController {
     private final UserService userService;
 
     public AdminUsersController(UserService userService) {
         this.userService = userService;
+    }
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserDto>> listUsers(@RequestParam(required = false) String role) {
+        var users = userService.listActiveByRoleNullable(role);
+        var dto = users.stream().map(u -> new UserDto(
+                u.getId(),
+                u.getEmail(),
+                u.getFirstName(),
+                u.getLastName(),
+                u.getOrganization(),
+                u.getRole().name(),
+                u.isEnabled(),
+                u.isEmailVerified(),
+                u.getCreatedAt(),
+                u.getUpdatedAt(),
+                u.getLastLogin()
+        )).toList();
+
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping("/ca")

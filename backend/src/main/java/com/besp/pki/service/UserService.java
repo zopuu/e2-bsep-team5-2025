@@ -243,6 +243,20 @@ public class UserService {
         }
         return sb.toString();
     }
+    public List<User> listActiveByRoleNullable(String role) {
+        // If role is provided, use your existing “active by role” repo call.
+        if (role != null && !role.isBlank()) {
+            try {
+                var enumRole = UserRole.valueOf(role.trim());
+                return findUsersByRole(enumRole); // already returns ACTIVE users by role
+            } catch (IllegalArgumentException iae) {
+                // Unknown role string -> return empty list rather than failing
+                return List.of();
+            }
+        }
+        // No role filter -> return active users
+        return findActiveUsers();
+    }
 }
 
 
