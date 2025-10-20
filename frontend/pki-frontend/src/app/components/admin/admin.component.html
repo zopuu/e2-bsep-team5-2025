@@ -1,6 +1,9 @@
 <div class="admin-wrap">
-  <h1>Admin Panel</h1>
-  <p class="muted">Only admins can view this page.</p>
+ <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h1>Admin Panel</h1>
+    <button (click)="logout()" class="logout-btn">Logout</button>
+  </div>
+  <p>Only admins can view this page.</p>
 
   <section class="grid">
     <a class="card action" routerLink="/admin/ca">

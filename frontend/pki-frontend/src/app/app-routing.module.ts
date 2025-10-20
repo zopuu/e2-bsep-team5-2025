@@ -11,6 +11,8 @@ import { AdminIntermediateComponent } from './components/admin/admin-intermediat
 import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
 import { AdminShellComponent } from './components/admin/admin-shell/admin-shell.component';
 import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 
 const routes: Routes = [
 
@@ -39,6 +41,8 @@ const routes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'admin/ca', component: AdminCaComponent, canActivate: [AdminGuard] },
   { path: 'admin/ca/intermediate', component: AdminIntermediateComponent, canActivate: [AdminGuard] },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   { path: '**', redirectTo: '/register' },
 ];
 

@@ -28,6 +28,7 @@ export interface PasswordStrengthResult {
 export interface LoginRequest {
   email: string;
   password: string;
+  captchaToken: string;
 }
 
 export interface LoginResponse {
@@ -99,5 +100,9 @@ export class AuthService {
   isAdmin(): boolean {
     const r = this.getRole();
     return r === 'ROLE_ADMIN' || r === 'ADMIN';
+  }
+
+  logout(): void {
+    localStorage.removeItem('token');
   }
 }

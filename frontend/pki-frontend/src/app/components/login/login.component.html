@@ -13,17 +13,55 @@
 
     <div>
       <label for="password">Password</label>
-      <input id="password" type="password" formControlName="password" />
+      <div class="password-input-wrapper">
+        <input 
+          id="password" 
+          [type]="showPassword ? 'text' : 'password'" 
+          formControlName="password" 
+        />
+        <button type="button" class="toggle-password-btn" (click)="togglePasswordVisibility()">
+          {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+        </button>
+      </div>
       <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
         <small>Password is required</small>
       </div>
     </div>
 
-    <button type="submit" [disabled]="isLoading">Login</button>
+    <!-- Custom Arithmetic CAPTCHA -->
+    <div class="captcha-container">
+      <div class="captcha-question">
+        <strong>Solve: {{ captchaQuestion }} = ?</strong>
+      </div>
+      <input 
+        type="number" 
+        [(ngModel)]="captchaAnswer" 
+        [ngModelOptions]="{standalone: true}"
+        (ngModelChange)="checkCaptchaAnswer()"
+        placeholder="Enter answer"
+        class="captcha-input"
+        [disabled]="captchaSolved">
+      <button 
+        type="button" 
+        (click)="generateCaptcha()" 
+        class="captcha-refresh-btn">
+        🔄 New Question
+      </button>
+      <div *ngIf="captchaError" class="captcha-error">
+        {{ captchaError }}
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="isLoading || !captchaSolved">Login</button>
 
     <p *ngIf="message" [class]="messageType">{{ message }}</p>
+
+    <div class="forgot-password-link">
+      <a routerLink="/forgot-password">Forgot Password?</a>
+    </div>
+
+    <div class="signup-link">
+      <p>Don't have an account? <a routerLink="/register">Sign up</a></p>
+    </div>
   </form>
 </div>
-
-
-

@@ -131,6 +131,60 @@ public class UserService {
     public boolean passwordMatches(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
+    
+    public void createAndSendPasswordResetToken(String email) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            // Don't reveal if email exists or not for security
+            return;
+        }
+        
+        User user = userOpt.get();
+        
+        // Invalidate any existing password reset tokens for this user
+        List<ActivationToken> existingTokens = activationTokenRepository.findActiveTokensByUser(user);
+        for (ActivationToken token : existingTokens) {
+            token.markAsUsed();
+            activationTokenRepository.save(token);
+        }
+        
+        // Create new password reset token (valid for 1 hour)
+        ActivationToken resetToken = new ActivationToken();
+        resetToken.setUser(user);
+        resetToken.setExpiresAt(LocalDateTime.now().plusHours(1));
+        
+        ActivationToken savedToken = activationTokenRepository.save(resetToken);
+        
+        // Send password reset email
+        emailService.sendPasswordResetEmail(user.getEmail(), savedToken.getToken(), user.getFirstName());
+    }
+    
+    public boolean resetPassword(String token, String newPassword) {
+        // Validate password strength
+        PasswordValidationService.PasswordStrengthResult passwordResult = passwordValidationService.validatePassword(newPassword);
+        if (!passwordResult.isValid()) {
+            return false;
+        }
+        
+        Optional<ActivationToken> tokenOpt = activationTokenRepository.findValidToken(token, LocalDateTime.now());
+        
+        if (tokenOpt.isEmpty()) {
+            return false; // Token not found or expired
+        }
+        
+        ActivationToken activationToken = tokenOpt.get();
+        User user = activationToken.getUser();
+        
+        // Update password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        
+        // Mark token as used
+        activationToken.markAsUsed();
+        activationTokenRepository.save(activationToken);
+        
+        return true;
+    }
 }
 
 

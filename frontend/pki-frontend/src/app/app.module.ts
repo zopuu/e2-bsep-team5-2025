@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -24,7 +24,8 @@ import { RouterModule } from '@angular/router';
 import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
 import { MatDialog } from '@angular/material/dialog';
 import { MatDialogModule } from '@angular/material/dialog';
-
+import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -38,7 +39,9 @@ import { MatDialogModule } from '@angular/material/dialog';
     AdminIntermediateComponent,
     AdminShellComponent,
     AdminDashboardComponent,
-    AdminCertificatesComponent
+    AdminCertificatesComponent,
+    ForgotPasswordComponent,
+    ResetPasswordComponent
   ],
   imports: [
     BrowserModule,
@@ -52,7 +55,9 @@ import { MatDialogModule } from '@angular/material/dialog';
     ReactiveFormsModule,
     MatSnackBarModule,
     MatPaginatorModule,
-    MatDialogModule
+    MatDialogModule,
+    FormsModule,
+    HttpClientModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }

@@ -2,5 +2,22 @@
   padding: 24px;
 }
 
+.logout-btn {
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+  
+  &:hover {
+    background-color: #c82333;
+  }
+}
+
+
+
 
 
