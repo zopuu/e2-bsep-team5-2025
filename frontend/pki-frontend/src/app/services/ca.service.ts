@@ -12,6 +12,32 @@ export interface CaIssuerDto {
   notBefore: string;
   notAfter: string;
 }
+export interface IntermediateCaRequest {
+  issuerRecordId: number;
+  subject: {
+    commonName: string;
+    organization?: string;
+    organizationalUnit?: string;
+    country?: string;
+    state?: string;
+    locality?: string;
+  };
+  yearsValid: number;
+  pathLenConstraint?: number | null;
+  crlDistributionPoint?: string | null;
+  ocspUrl?: string | null;
+  // NOTE: ownerUserId is *ignored* by backend for CA route; owner = current CA user
+}
+export interface CertificateResponse {
+  serialNumber: string;
+  subjectDn: string;
+  issuerDn: string;
+  notBefore: string;
+  notAfter: string;
+  isCa: boolean;
+  pathLenConstraint?: number | null;
+  chainSubjectDns: string[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class CaApiService {
@@ -28,4 +54,11 @@ export class CaApiService {
       headers: this.authHeaders()
     });
   }
+  createIntermediateCAAsCa(body: IntermediateCaRequest) {
+  return this.http.post<{ success:boolean; message:string; data: CertificateResponse }>(
+    `${this.apiUrl}/api/ca/intermediate`,
+    body,
+    { headers: this.authHeaders() }
+  );
+}
 }

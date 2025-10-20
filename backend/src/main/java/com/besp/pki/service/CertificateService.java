@@ -363,6 +363,54 @@ public class CertificateService {
                 ))
                 .toList();
     }
+    /**
+     * CA user issues an Intermediate CA from an issuer in *their* chain/scope.
+     * - Verifies issuer is ACTIVE CA and currently valid.
+     * - Verifies SCOPE: issuer owned by this CA user OR same organization.
+     * - Forces owner to be the CA user (ignores any ownerUserId sent by client).
+     * - Reuses the existing admin implementation for actual issuance.
+     */
+    public CertificateResponse issueIntermediateCAForCaUser(IntermediateCaRequest req, String caUserEmail) {
+        User caUser = userService.findByEmail(caUserEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Unknown CA user"));
+
+        // Fetch issuer and check scope
+        CertificateRecord issuer = repo.findById(req.issuerRecordId())
+                .orElseThrow(() -> new IllegalArgumentException("Issuer not found: " + req.issuerRecordId()));
+
+        if (!issuer.isCa() || issuer.getStatus() != CertificateStatus.ACTIVE) {
+            throw new IllegalArgumentException("Issuer is not an active CA");
+        }
+        var now = Instant.now();
+        if (issuer.getNotBefore().isAfter(now) || issuer.getNotAfter().isBefore(now)) {
+            throw new IllegalArgumentException("Issuer is not currently valid");
+        }
+
+        boolean okOwner = issuer.getOwner() != null && issuer.getOwner().getId() != null
+                && issuer.getOwner().getId().equals(caUser.getId());
+        boolean okOrg = issuer.getOwner() != null && issuer.getOwner().getOrganization() != null
+                && issuer.getOwner().getOrganization().equals(caUser.getOrganization());
+
+        if (!okOwner && !okOrg) {
+            throw new IllegalArgumentException("Issuer is outside your CA scope");
+        }
+
+        // Force the new Intermediate's owner to be this CA user
+        var caScopedReq = new IntermediateCaRequest(
+                req.issuerRecordId(),
+                req.subject(),
+                req.yearsValid(),
+                req.pathLenConstraint(),
+                req.crlDistribuitionPoints(),
+                req.authorityInfoAccessOcsp(),
+                req.crlDistributionPoint(),
+                req.ocspUrl(),
+                caUser.getId()  // <— owner is the CA user
+        );
+
+        // Reuse existing core logic (admin method) without changing it
+        return this.issueIntermediateCA(caScopedReq, caUserEmail);
+    }
 
 
 }
