@@ -101,4 +101,8 @@ export class AuthService {
     const r = this.getRole();
     return r === 'ROLE_ADMIN' || r === 'ADMIN';
   }
+
+  logout(): void {
+    localStorage.removeItem('token');
+  }
 }
