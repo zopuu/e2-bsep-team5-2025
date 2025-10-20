@@ -42,6 +42,7 @@ public class SecurityConfig {
                         // Allow access to actuator endpoints
                         .requestMatchers("/actuator/**","/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/ca/**").hasAnyRole("ADMIN", "CA_USER")
                         // Require authentication for all other requests
                         .anyRequest().authenticated()
                 )

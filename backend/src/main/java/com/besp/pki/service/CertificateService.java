@@ -49,6 +49,7 @@ public class CertificateService {
     private static final String KEY_ALG_RSA = "RSA";
 
     private final CertificateRecordRepository repo;
+    private final UserService userService;
     private final CryptoSealService seal;
     private final KeyStoreService ks;
 
@@ -57,8 +58,8 @@ public class CertificateService {
 
     private static final SecureRandom RNG = new SecureRandom();
 
-    public CertificateService(CertificateRecordRepository repo, CryptoSealService seal, KeyStoreService ks) {
-        this.repo = repo; this.seal = seal; this.ks = ks;
+    public CertificateService(CertificateRecordRepository repo, CryptoSealService seal, KeyStoreService ks, UserService userService) {
+        this.repo = repo; this.seal = seal; this.ks = ks ; this.userService = userService;
     }
 
     public List<CertificateRecord> findAll() { return repo.findAll(); }
@@ -339,6 +340,28 @@ public class CertificateService {
         rec.setCreatedBy((rec.getCreatedBy() == null ? "" : rec.getCreatedBy()) + " | revoked by " + by);
 
         repo.save(rec);
+    }
+    public List<CaIssuerDto> findActiveIssuersForCaUserEmail(String email) {
+        var userOpt = userService.findByEmail(email);
+        if (userOpt.isEmpty()) return List.of();
+        var user = userOpt.get();
+        var now = Instant.now();
+
+        // Prefer ownerUserId; if you rely on organization, use the org query
+        var records = repo.findActiveCaIssuersByOwnerUserId(user.getId(),
+                CertificateStatus.ACTIVE, now);
+
+        return records.stream()
+                .map(r -> new CaIssuerDto(
+                        r.getId(),
+                        r.getSubjectDn(),
+                        r.getIssuerDn(),
+                        r.getSerialNumber(),
+                        r.isCa(),
+                        r.getNotBefore(),
+                        r.getNotAfter()
+                ))
+                .toList();
     }
 
 

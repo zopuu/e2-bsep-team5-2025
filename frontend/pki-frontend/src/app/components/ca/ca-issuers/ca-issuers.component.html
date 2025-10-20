@@ -1,0 +1,35 @@
+<div class="wrap">
+  <div class="header">
+    <h2>My CA Issuers</h2>
+    <div class="actions">
+      <input class="search" placeholder="Search subject / issuer / serial…" [(ngModel)]="q" (input)="applyFilter()">
+      <button class="btn" (click)="load()">Refresh</button>
+    </div>
+  </div>
+
+  <div *ngIf="toast.type" class="toast" [class.ok]="toast.type==='success'" [class.err]="toast.type==='error'">{{ toast.text }}</div>
+
+  <div class="card">
+    <div *ngIf="loading" class="muted">Loading…</div>
+    <div *ngIf="!loading && !filtered.length" class="muted">No issuers found.</div>
+
+    <table *ngIf="!loading && filtered.length" class="tbl">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Issuer</th>
+          <th>Serial</th>
+          <th>Valid To</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let i of filtered">
+          <td>{{ i.subjectDn }}</td>
+          <td>{{ i.issuerDn }}</td>
+          <td>{{ i.serialNumber }}</td>
+          <td>{{ i.notAfter | date:'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

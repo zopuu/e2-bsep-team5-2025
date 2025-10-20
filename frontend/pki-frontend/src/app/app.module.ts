@@ -27,6 +27,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { AdminUsersComponent } from './components/admin/admin-users/admin-users.component';
+import { CaIssuersComponent } from './components/ca/ca-issuers/ca-issuers.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,8 @@ import { AdminUsersComponent } from './components/admin/admin-users/admin-users.
     AdminCertificatesComponent,
     ForgotPasswordComponent,
     ResetPasswordComponent,
-    AdminUsersComponent
+    AdminUsersComponent,
+    CaIssuersComponent
   ],
   imports: [
     BrowserModule,

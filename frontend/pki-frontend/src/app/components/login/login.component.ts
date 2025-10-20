@@ -14,7 +14,7 @@ export class LoginComponent implements OnInit {
   message = '';
   messageType: 'success' | 'error' | '' = '';
   showPassword = false;
-  
+
   // Custom CAPTCHA
   captchaQuestion: string = '';
   captchaAnswer: string = '';
@@ -116,8 +116,10 @@ export class LoginComponent implements OnInit {
 
         // Redirect by role
         const role = this.authService.getRole();
-        if (role === 'ROLE_ADMIN' || role === 'ADMIN') {
+        if (this.authService.isAdmin()) {
           this.router.navigate(['/admin']);
+        } else if (this.authService.isCaUser()) {
+          this.router.navigate(['/ca']);
         } else {
           this.router.navigate(['/home']);
         }
