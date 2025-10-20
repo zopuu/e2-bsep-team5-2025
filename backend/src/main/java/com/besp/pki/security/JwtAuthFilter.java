@@ -1,4 +1,5 @@
  package com.besp.pki.security;
+import com.besp.pki.repository.RevokedTokenRepository;
 import com.besp.pki.security.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,9 +21,11 @@ import java.util.List;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
+    private final RevokedTokenRepository revokedTokenRepository;
 
-    public JwtAuthFilter(JwtUtil jwtUtil) {
+    public JwtAuthFilter(JwtUtil jwtUtil, RevokedTokenRepository revokedTokenRepository) {
         this.jwtUtil = jwtUtil;
+        this.revokedTokenRepository = revokedTokenRepository;
     }
 
     @Override
@@ -34,7 +37,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             try {
                 if (jwtUtil.validate(token)) {
-                    Claims claims = jwtUtil.getAllClaims(token);  // add this method below
+                    // Check if token is revoked (blacklist check)
+                    String jti = jwtUtil.getJti(token);
+                    if (revokedTokenRepository.existsByJti(jti)) {
+                        // Token is revoked, reject request
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write("Token has been revoked");
+                        return;
+                    }
+                    
+                    Claims claims = jwtUtil.getAllClaims(token);
                     String subject = claims.getSubject();
 
                     // Accept several claim shapes: roles: ["ROLE_ADMIN"] | role: "ROLE_ADMIN" | authority: "ROLE_ADMIN"

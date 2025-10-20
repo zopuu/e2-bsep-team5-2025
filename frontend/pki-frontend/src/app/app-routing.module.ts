@@ -13,6 +13,7 @@ import { AdminShellComponent } from './components/admin/admin-shell/admin-shell.
 import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
 
 const routes: Routes = [
 
@@ -39,6 +40,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'activate', component: ActivationComponent },
   { path: 'home', component: HomeComponent },
+  { path: 'active-sessions', component: ActiveSessionsComponent },
   { path: 'admin/ca', component: AdminCaComponent, canActivate: [AdminGuard] },
   { path: 'admin/ca/intermediate', component: AdminIntermediateComponent, canActivate: [AdminGuard] },
   { path: 'forgot-password', component: ForgotPasswordComponent },

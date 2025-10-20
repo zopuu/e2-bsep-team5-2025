@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -25,13 +26,19 @@ public class JwtUtil {
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String subject, String role) {
+    public String generateToken(String subject, String role, String device, String ip) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
+        
+        // Generate unique JWT ID (jti)
+        String jti = UUID.randomUUID().toString();
 
         return Jwts.builder()
+                .setId(jti) // JWT ID for tracking
                 .setSubject(subject)
                 .claim("roles", List.of(role.startsWith("ROLE_") ? role : "ROLE_" + role))
+                .claim("device", device) // Device/browser info
+                .claim("ip", ip) // IP address
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -50,6 +57,20 @@ public class JwtUtil {
     public String getSubject(String token) {
         return getClaims(token).getSubject();
     }
+    
+    public String getJti(String token) {
+        return getClaims(token).getId();
+    }
+    
+    public String getDevice(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("device", String.class);
+    }
+    
+    public String getIp(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("ip", String.class);
+    }
 
     private Claims getClaims(String token) {
         return Jwts.parserBuilder()
@@ -58,6 +79,7 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+    
     public Claims getAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)

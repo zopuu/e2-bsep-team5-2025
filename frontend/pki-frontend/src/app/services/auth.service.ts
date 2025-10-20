@@ -103,6 +103,17 @@ export class AuthService {
   }
 
   logout(): void {
+    const token = this.getToken();
+    if (token) {
+      // Try to revoke current session on backend
+      // If it fails, just clear local storage anyway
+      this.http.delete(`${this.apiUrl}/api/auth/tokens/current`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).subscribe({
+        next: () => console.log('Session revoked on backend'),
+        error: () => console.log('Failed to revoke session on backend')
+      });
+    }
     localStorage.removeItem('token');
   }
 }
