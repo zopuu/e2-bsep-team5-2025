@@ -4,6 +4,7 @@ import { HttpParams } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { Observable } from 'rxjs';
 import { PagedResponse, CertificateListItem, RevokeRequest } from '../models/certificate';
+import { CreateCaUserRequest, UserDto } from '../models/user';
 
 
 @Injectable({ providedIn: 'root' })
@@ -82,4 +83,20 @@ export class AdminApiService {
       { headers: this.authHeaders() }
     );
   }
+  listCaUsers(): Observable<UserDto[]> {
+  const params = new HttpParams().set('role', 'CA_USER');
+  return this.http.get<UserDto[]>(`${this.apiUrl}/api/admin/users`, {
+    headers: this.authHeaders(),
+    params
+  });
+}
+
+/** Create (invite) a new CA user */
+createCaUser(body: CreateCaUserRequest): Observable<{ success: boolean; message: string; data?: any }> {
+  return this.http.post<{ success: boolean; message: string; data?: any }>(
+    `${this.apiUrl}/api/admin/users/ca`,
+    body,
+    { headers: this.authHeaders() }
+  );
+}
 }

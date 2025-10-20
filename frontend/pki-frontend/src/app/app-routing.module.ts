@@ -13,6 +13,7 @@ import { AdminShellComponent } from './components/admin/admin-shell/admin-shell.
 import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
 import { ForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { AdminUsersComponent } from './components/admin/admin-users/admin-users.component';
 
 const routes: Routes = [
 
@@ -29,7 +30,7 @@ const routes: Routes = [
       { path: 'certificates', component: AdminCertificatesComponent },    // placeholder
       // { path: 'csr', component: AdminCsrQueueComponent },                 // placeholder
       // { path: 'templates', component: AdminTemplatesComponent },          // placeholder
-      // { path: 'users', component: AdminUsersComponent },                  // placeholder
+      { path: 'users', component: AdminUsersComponent },
       // { path: 'revocations', component: AdminRevocationsComponent },      // placeholder
       // { path: 'logs', component: AdminLogsComponent },                    // placeholder
       // { path: 'security', component: AdminSecurityComponent }             // placeholder

@@ -1,0 +1,89 @@
+<div class="wrap">
+  <div class="header">
+    <h2>CA Users</h2>
+    <div class="actions">
+      <input class="search" placeholder="Search name / email / org…" [(ngModel)]="q" (input)="applyFilter()" />
+      <button class="btn" (click)="loadUsers()">Refresh</button>
+    </div>
+  </div>
+
+  <div *ngIf="toast.type" class="toast" [class.ok]="toast.type==='success'" [class.err]="toast.type==='error'">
+    {{ toast.text }}
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3 class="card-title">Invite new CA user</h3>
+
+      <form [formGroup]="form" (ngSubmit)="createCaUser()" class="form">
+        <div class="row">
+          <label>Email</label>
+          <input formControlName="email" type="email" placeholder="john.doe@org.com" />
+          <div class="err" *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+            Valid email is required
+          </div>
+        </div>
+
+        <div class="row two">
+          <div>
+            <label>First name</label>
+            <input formControlName="firstName" placeholder="John" />
+            <div class="err" *ngIf="form.get('firstName')?.touched && form.get('firstName')?.invalid">
+              Required (max 64)
+            </div>
+          </div>
+          <div>
+            <label>Last name</label>
+            <input formControlName="lastName" placeholder="Doe" />
+            <div class="err" *ngIf="form.get('lastName')?.touched && form.get('lastName')?.invalid">
+              Required (max 64)
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <label>Organization</label>
+          <input formControlName="organization" placeholder="RT-RK" />
+          <div class="err" *ngIf="form.get('organization')?.touched && form.get('organization')?.invalid">
+            Required (max 128)
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn primary" [disabled]="creating">Invite CA user</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Existing CA users</h3>
+      <div *ngIf="loadingList" class="muted">Loading…</div>
+      <div *ngIf="!loadingList && !filtered.length" class="muted">No CA users found.</div>
+
+      <table *ngIf="!loadingList && filtered.length" class="tbl">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Organization</th>
+            <th>Status</th>
+            <th>Last login</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of filtered">
+            <td>{{ u.firstName }} {{ u.lastName }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.organization }}</td>
+            <td>
+              <span class="chip" [class.green]="u.enabled && u.emailVerified" [class.gray]="!u.enabled">
+                {{ u.enabled ? (u.emailVerified ? 'Active' : 'Unverified') : 'Disabled' }}
+              </span>
+            </td>
+            <td>{{ u.lastLogin ? (u.lastLogin | date:'short') : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
