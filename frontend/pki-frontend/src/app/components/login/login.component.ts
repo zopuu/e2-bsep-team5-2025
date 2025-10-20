@@ -13,7 +13,13 @@ export class LoginComponent implements OnInit {
   isLoading = false;
   message = '';
   messageType: 'success' | 'error' | '' = '';
-  private captchaToken: string = '';
+  
+  // Custom CAPTCHA
+  captchaQuestion: string = '';
+  captchaAnswer: string = '';
+  captchaSolved: boolean = false;
+  captchaError: string = '';
+  private captchaCorrectAnswer: number = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -27,13 +33,61 @@ export class LoginComponent implements OnInit {
       password: ['', [Validators.required]]
     });
 
-    // Turnstile callback to capture token
-    (window as any).onloadTurnstileCallback = () => {
-      // tokens are emitted automatically by Turnstile; listen to global event
-      document.addEventListener('turnstile-token', (e: any) => {
-        this.captchaToken = e.detail.token;
-      });
-    };
+    // Generate initial CAPTCHA
+    this.generateCaptcha();
+  }
+
+  generateCaptcha(): void {
+    const operations = ['+', '-', '*'];
+    const operation = operations[Math.floor(Math.random() * operations.length)];
+    let num1: number, num2: number, answer: number;
+
+    switch (operation) {
+      case '+':
+        num1 = Math.floor(Math.random() * 20) + 1;
+        num2 = Math.floor(Math.random() * 20) + 1;
+        answer = num1 + num2;
+        break;
+      case '-':
+        num1 = Math.floor(Math.random() * 20) + 10;
+        num2 = Math.floor(Math.random() * num1) + 1;
+        answer = num1 - num2;
+        break;
+      case '*':
+        num1 = Math.floor(Math.random() * 10) + 1;
+        num2 = Math.floor(Math.random() * 10) + 1;
+        answer = num1 * num2;
+        break;
+      default:
+        num1 = 5;
+        num2 = 3;
+        answer = 8;
+    }
+
+    this.captchaQuestion = `${num1} ${operation} ${num2}`;
+    this.captchaCorrectAnswer = answer;
+    this.captchaAnswer = '';
+    this.captchaSolved = false;
+    this.captchaError = '';
+    console.log(`Generated CAPTCHA: ${this.captchaQuestion} = ${answer}`);
+  }
+
+  checkCaptchaAnswer(): void {
+    if (!this.captchaAnswer || this.captchaAnswer === '') {
+      this.captchaSolved = false;
+      this.captchaError = '';
+      return;
+    }
+
+    const userAnswer = parseInt(String(this.captchaAnswer));
+    if (!isNaN(userAnswer) && userAnswer === this.captchaCorrectAnswer) {
+      this.captchaSolved = true;
+      this.captchaError = '';
+      console.log('CAPTCHA solved correctly!');
+    } else {
+      this.captchaSolved = false;
+      this.captchaError = 'Wrong answer! Try again.';
+    }
   }
 
   onSubmit(): void {
@@ -42,9 +96,15 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    if (!this.captchaSolved) {
+      this.messageType = 'error';
+      this.message = 'Please solve the CAPTCHA correctly';
+      return;
+    }
+
     this.isLoading = true;
     this.message = '';
-    const payload: LoginRequest = { ...this.loginForm.value, captchaToken: this.captchaToken };
+    const payload: LoginRequest = { ...this.loginForm.value, captchaToken: 'custom-arithmetic-solved' };
 
     this.authService.login(payload).subscribe({
       next: (res: LoginResponse) => {
@@ -66,9 +126,9 @@ export class LoginComponent implements OnInit {
         this.isLoading = false;
         this.messageType = 'error';
         this.message = err.error?.message || 'Invalid credentials';
+        // Reset CAPTCHA on error
+        this.generateCaptcha();
       }
     });
   }
 }
-
-

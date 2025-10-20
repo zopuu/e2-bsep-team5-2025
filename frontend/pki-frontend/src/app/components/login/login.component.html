@@ -19,11 +19,32 @@
       </div>
     </div>
 
-    <button type="submit" [disabled]="isLoading">Login</button>
+    <!-- Custom Arithmetic CAPTCHA -->
+    <div class="captcha-container">
+      <div class="captcha-question">
+        <strong>Solve: {{ captchaQuestion }} = ?</strong>
+      </div>
+      <input 
+        type="number" 
+        [(ngModel)]="captchaAnswer" 
+        [ngModelOptions]="{standalone: true}"
+        (ngModelChange)="checkCaptchaAnswer()"
+        placeholder="Enter answer"
+        class="captcha-input"
+        [disabled]="captchaSolved">
+      <button 
+        type="button" 
+        (click)="generateCaptcha()" 
+        class="captcha-refresh-btn">
+        🔄 New Question
+      </button>
+      <div *ngIf="captchaError" class="captcha-error">
+        {{ captchaError }}
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="isLoading || !captchaSolved">Login</button>
 
     <p *ngIf="message" [class]="messageType">{{ message }}</p>
-
-    <!-- Cloudflare Turnstile widget -->
-    <div class="cf-turnstile" data-sitekey="0x4AAAAAB5105q6p2DcYvyt"></div>
   </form>
 </div>

@@ -15,11 +15,11 @@ import java.util.Map;
 @Service
 public class CaptchaService {
 
-    @Value("${turnstile.secret}")
-    private String turnstileSecret;
+    @Value("${recaptcha.secret}")
+    private String recaptchaSecret;
 
     private final RestTemplate restTemplate;
-    private static final String TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+    private static final String RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
 
     public CaptchaService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -27,32 +27,48 @@ public class CaptchaService {
 
     public boolean verify(String captchaToken, String clientIp) {
         if (captchaToken == null || captchaToken.trim().isEmpty()) {
+            System.err.println("CAPTCHA token is null or empty");
             return false;
         }
 
+        // Accept custom arithmetic CAPTCHA
+        if ("custom-arithmetic-solved".equals(captchaToken)) {
+            System.err.println("Custom arithmetic CAPTCHA verified successfully");
+            return true;
+        }
+
+        // For Google reCAPTCHA (if needed in future)
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("secret", turnstileSecret);
+            body.add("secret", recaptchaSecret);
             body.add("response", captchaToken);
-            body.add("remoteip", clientIp);
+            if (clientIp != null && !clientIp.isEmpty()) {
+                body.add("remoteip", clientIp);
+            }
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(TURNSTILE_VERIFY_URL, request, Map.class);
+            System.err.println("Sending reCAPTCHA verification request...");
+            ResponseEntity<Map> response = restTemplate.postForEntity(RECAPTCHA_VERIFY_URL, request, Map.class);
+
+            System.err.println("reCAPTCHA response status: " + response.getStatusCode());
+            System.err.println("reCAPTCHA response body: " + response.getBody());
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
                 Boolean success = (Boolean) responseBody.get("success");
+                System.err.println("reCAPTCHA verification success: " + success);
                 return success != null && success;
             }
 
             return false;
         } catch (Exception e) {
             // Log the exception in production
-            System.err.println("Error verifying Turnstile captcha: " + e.getMessage());
+            System.err.println("Error verifying reCAPTCHA: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
