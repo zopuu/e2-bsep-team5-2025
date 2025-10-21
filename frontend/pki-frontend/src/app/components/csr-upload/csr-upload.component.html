@@ -127,9 +127,16 @@
       <button 
         type="submit" 
         class="btn btn-primary"
-        [disabled]="!csrForm.valid">
-        Generate Certificate
+        [disabled]="!csrForm.valid || isLoading">
+        <span *ngIf="!isLoading">Generate Certificate</span>
+        <span *ngIf="isLoading">Generating Certificate...</span>
       </button>
+      
+      <!-- Loading indicator for certificate generation -->
+      <div class="loading" *ngIf="isLoading">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Issuing certificate...</span>
+      </div>
     </div>
 
   </form>

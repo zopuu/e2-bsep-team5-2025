@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CsrService } from '../../services/csr.service';
-import { CsrData, CaIssuerDto, CsrUploadResponse } from '../../models/csr';
+import { CsrData, CaIssuerDto, CsrUploadResponse, CsrCertificateRequest, CertificateIssueResponse } from '../../models/csr';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
@@ -87,11 +87,46 @@ export class CsrUploadComponent implements OnInit {
 
   onSubmit(): void {
     if (this.csrForm.valid && this.csrData) {
-      // TODO: Implement certificate generation
-      this.snackBar.open('Certificate generation will be implemented in the next step', 'Close', { duration: 3000 });
+      const request: CsrCertificateRequest = {
+        csrData: this.csrData,
+        caCertificateId: this.csrForm.value.caCertificateId,
+        validityDays: this.csrForm.value.validityDays
+      };
+
+      this.isLoading = true;
+      
+      this.csrService.issueCertificate(request).subscribe({
+        next: (response: CertificateIssueResponse) => {
+          this.isLoading = false;
+          if (response.success) {
+            this.snackBar.open(
+              `Certificate issued successfully! ID: ${response.certificateId}`, 
+              'Close', 
+              { duration: 5000 }
+            );
+            // Reset form
+            this.resetForm();
+          } else {
+            this.snackBar.open(response.message || 'Failed to issue certificate', 'Close', { duration: 5000 });
+          }
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Error issuing certificate:', error);
+          this.snackBar.open('Error issuing certificate: ' + (error.error?.message || error.message), 'Close', { duration: 5000 });
+        }
+      });
     } else {
       this.snackBar.open('Please fill all required fields', 'Close', { duration: 3000 });
     }
+  }
+
+  private resetForm(): void {
+    this.csrForm.reset();
+    this.selectedFile = null;
+    this.csrData = null;
+    this.showCsrData = false;
+    this.initForm();
   }
 
   getFileName(): string {

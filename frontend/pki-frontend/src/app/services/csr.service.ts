@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CsrUploadResponse, CaIssuerDto, CsrUploadRequest } from '../models/csr';
+import { CsrUploadResponse, CaIssuerDto, CsrUploadRequest, CsrCertificateRequest, CertificateIssueResponse } from '../models/csr';
 
 @Injectable({
   providedIn: 'root'
@@ -50,6 +50,14 @@ export class CsrService {
   getCaCertificates(): Observable<CaIssuerDto[]> {
     return this.http.get<CaIssuerDto[]>(
       `${this.apiUrl}/ca-certificates`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  issueCertificate(request: CsrCertificateRequest): Observable<CertificateIssueResponse> {
+    return this.http.post<CertificateIssueResponse>(
+      `${this.apiUrl}/issue`,
+      request,
       { headers: this.getAuthHeaders() }
     );
   }

@@ -110,4 +110,27 @@ public class CsrController {
             return ResponseEntity.internalServerError().build();
         }
     }
+    
+    @PostMapping("/issue")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CA_USER', 'REGULAR_USER')")
+    public ResponseEntity<CertificateIssueResponse> issueCertificate(@Valid @RequestBody CertificateIssueRequest request) {
+        try {
+            log.info("Received certificate issue request for CN: {}", request.getCsrData().getCommonName());
+            
+            CertificateIssueResponse response = csrService.issueCertificate(request);
+            
+            if (response.isSuccess()) {
+                log.info("Certificate issued successfully with ID: {}", response.getCertificateId());
+                return ResponseEntity.ok(response);
+            } else {
+                log.error("Certificate issuance failed: {}", response.getMessage());
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+        } catch (Exception e) {
+            log.error("Unexpected error during certificate issuance: {}", e.getMessage());
+            return ResponseEntity.internalServerError()
+                .body(CertificateIssueResponse.error("Unexpected error: " + e.getMessage()));
+        }
+    }
 }

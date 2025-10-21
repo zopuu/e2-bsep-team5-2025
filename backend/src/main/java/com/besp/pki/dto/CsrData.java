@@ -1,6 +1,5 @@
 package com.besp.pki.dto;
 
-import java.security.PublicKey;
 import java.util.List;
 
 public class CsrData {

@@ -37,3 +37,15 @@ export interface CsrCertificateRequest {
   caCertificateId: number;
   validityDays: number;
 }
+
+export interface CertificateIssueResponse {
+  success: boolean;
+  message: string;
+  certificateId?: number;
+  serialNumber?: string;
+  subjectDn?: string;
+  issuerDn?: string;
+  notBefore?: string;
+  notAfter?: string;
+  fingerprintSha256?: string;
+}
