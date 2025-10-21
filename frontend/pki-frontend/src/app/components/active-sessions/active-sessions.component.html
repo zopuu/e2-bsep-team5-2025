@@ -1,0 +1,71 @@
+<div class="active-sessions-container">
+  <div class="header">
+    <h1>Aktivne sesije</h1>
+    <p class="description">Ovo su sva mesta na kojima ste trenutno prijavljeni na svoj nalog.</p>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <p>Učitavanje sesija...</p>
+  </div>
+
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+    <button (click)="loadSessions()" class="btn-retry">Pokušaj ponovo</button>
+  </div>
+
+  <div *ngIf="!loading && !error && sessions.length > 0" class="sessions-list">
+    
+    <!-- Current Session -->
+    <div class="session-card current" *ngIf="getCurrentSession() as currentSession">
+      <div class="session-info">
+        <div class="session-header">
+          <h3>{{ currentSession.device }}</h3>
+          <span class="badge current-badge">Trenutna sesija</span>
+        </div>
+        <div class="session-details">
+          <p><strong>IP adresa:</strong> {{ currentSession.ip }}</p>
+          <p><strong>Poslednja aktivnost:</strong> {{ formatDate(currentSession.lastActivity) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Other Sessions -->
+    <div *ngIf="getOtherSessions().length > 0" class="other-sessions">
+      <h2>Ostale sesije</h2>
+      
+      <div class="session-card" *ngFor="let session of getOtherSessions()">
+        <div class="session-info">
+          <div class="session-header">
+            <h3>{{ session.device }}</h3>
+          </div>
+          <div class="session-details">
+            <p><strong>IP adresa:</strong> {{ session.ip }}</p>
+            <p><strong>Poslednja aktivnost:</strong> {{ formatDate(session.lastActivity) }}</p>
+          </div>
+        </div>
+        <div class="session-actions">
+          <button 
+            class="btn-revoke" 
+            (click)="revokeSession(session.jti)"
+            [disabled]="revokingJti === session.jti">
+            {{ revokingJti === session.jti ? 'Odjavljivanje...' : 'Odjavi se' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revoke All Button -->
+    <div *ngIf="getOtherSessions().length > 0" class="revoke-all-section">
+      <button class="btn-revoke-all" (click)="revokeAllOtherSessions()">
+        Odjavi se sa svih ostalih sesija
+      </button>
+    </div>
+
+  </div>
+
+  <div *ngIf="!loading && !error && sessions.length === 0" class="no-sessions">
+    <p>Nema aktivnih sesija.</p>
+  </div>
+
+</div>
+

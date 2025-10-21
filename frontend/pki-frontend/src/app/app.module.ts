@@ -30,6 +30,7 @@ import { AdminUsersComponent } from './components/admin/admin-users/admin-users.
 import { CaIssuersComponent } from './components/ca/ca-issuers/ca-issuers.component';
 import { CaShellComponent } from './components/ca/ca-shell/ca-shell.component';
 import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermediate/ca-issue-intermediate.component';
+import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
 
 @NgModule({
   declarations: [
@@ -49,7 +50,8 @@ import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermedi
     AdminUsersComponent,
     CaIssuersComponent,
     CaShellComponent,
-    CaIssueIntermediateComponent
+    CaIssueIntermediateComponent,
+    ActiveSessionsComponent
   ],
   imports: [
     BrowserModule,

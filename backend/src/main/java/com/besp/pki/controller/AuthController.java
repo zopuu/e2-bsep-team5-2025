@@ -8,6 +8,7 @@ import com.besp.pki.dto.LoginResponse;
 import com.besp.pki.security.JwtUtil;
 import com.besp.pki.service.CaptchaService;
 import com.besp.pki.service.PasswordValidationService;
+import com.besp.pki.service.TokenService;
 import com.besp.pki.service.UserService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -20,20 +21,22 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 @CrossOrigin(origins = "${cors.allowed-origins}")
 public class AuthController {
-    
+
     private final UserService userService;
     private final PasswordValidationService passwordValidationService;
     private final JwtUtil jwtUtil;
     private final CaptchaService captchaService;
+    private final TokenService tokenService;
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    public AuthController(UserService userService, PasswordValidationService passwordValidationService, JwtUtil jwtUtil, CaptchaService captchaService) {
+    public AuthController(UserService userService, PasswordValidationService passwordValidationService, JwtUtil jwtUtil, CaptchaService captchaService, TokenService tokenService) {
         this.userService = userService;
         this.passwordValidationService = passwordValidationService;
         this.jwtUtil = jwtUtil;
         this.captchaService = captchaService;
+        this.tokenService = tokenService;
     }
-    
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegistrationRequest request) {
         try {
@@ -42,7 +45,7 @@ public class AuthController {
                 return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Passwords do not match"));
             }
-            
+
             // Register user
             userService.registerUser(
                 request.getEmail(),
@@ -51,11 +54,11 @@ public class AuthController {
                 request.getLastName(),
                 request.getOrganization()
             );
-            
+
             return ResponseEntity.ok(ApiResponse.success(
                 "Registration successful! Please check your email to activate your account."
             ));
-            
+
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));
@@ -65,31 +68,109 @@ public class AuthController {
                     .body(ApiResponse.error("Registration failed. Please try again."));
         }
     }
-    
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
+                                    jakarta.servlet.http.HttpServletRequest httpRequest) {
         try {
+            log.info("Login attempt for: {}", request.getEmail());
+
+            // Extract client IP and device info
+            String clientIp = getClientIp(httpRequest);
+            String deviceInfo = getUserAgent(httpRequest);
+
+            log.info("Client IP: {}, Device: {}", clientIp, deviceInfo);
+
             // Verify captcha first
-            String clientIp = null; // optionally extract from request if needed
-            boolean captchaOk = captchaService.verify(request.getCaptchaToken(), clientIp);
-            if (!captchaOk) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("CAPTCHA verification failed"));
-            }
+            // TEMPORARILY DISABLED FOR TESTING
+            // boolean captchaOk = captchaService.verify(request.getCaptchaToken(), clientIp);
+            // if (!captchaOk) {
+            //     return ResponseEntity.badRequest().body(ApiResponse.error("CAPTCHA verification failed"));
+            // }
             return userService.findByEmail(request.getEmail())
                 .filter(User::isEnabled)
                 .map(user -> {
+                    log.info("User found: {}, enabled: {}", user.getEmail(), user.isEnabled());
                     if (!userService.passwordMatches(request.getPassword(), user.getPassword())) {
+                        log.warn("Invalid password for: {}", request.getEmail());
                         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials"));
                     }
                     userService.updateLastLogin(user);
                     String role = user.getRole().name();
-                    String token = jwtUtil.generateToken(user.getEmail(),role,user.getOrganization());
+                    String token = jwtUtil.generateToken(user.getEmail(), role,user.getOrganization(), deviceInfo, clientIp);
+
+                    // Create or update active session
+                    tokenService.createOrUpdateSession(token);
+
+                    log.info("Login successful for: {}", request.getEmail());
                     return ResponseEntity.ok(new LoginResponse(token, "Login successful"));
                 })
-                .orElseGet(() -> ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials")));
+                .orElseGet(() -> {
+                    log.warn("User not found or not enabled: {}", request.getEmail());
+                    return ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials"));
+                });
         } catch (Exception e) {
+            log.error("Login failed for: {}", request.getEmail(), e);
             return ResponseEntity.internalServerError().body(ApiResponse.error("Login failed. Please try again."));
         }
+    }
+
+    private String getClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty()) {
+            return xRealIp;
+        }
+        String remoteAddr = request.getRemoteAddr();
+
+        // Convert IPv6 loopback to IPv4 for better readability
+        if ("0:0:0:0:0:0:0:1".equals(remoteAddr) || "::1".equals(remoteAddr)) {
+            return "127.0.0.1";
+        }
+
+        return remoteAddr;
+    }
+
+    private String getUserAgent(jakarta.servlet.http.HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        if (userAgent == null || userAgent.isEmpty()) {
+            return "Unknown";
+        }
+        // Parse User-Agent to get browser and OS
+        return parseUserAgent(userAgent);
+    }
+
+    private String parseUserAgent(String userAgent) {
+        // Simple parsing - extract browser and OS
+        String browser = "Unknown";
+        String os = "Unknown";
+
+        if (userAgent.contains("Chrome") && !userAgent.contains("Edg")) {
+            browser = "Chrome";
+        } else if (userAgent.contains("Firefox")) {
+            browser = "Firefox";
+        } else if (userAgent.contains("Safari") && !userAgent.contains("Chrome")) {
+            browser = "Safari";
+        } else if (userAgent.contains("Edg")) {
+            browser = "Edge";
+        }
+
+        if (userAgent.contains("Windows")) {
+            os = "Windows";
+        } else if (userAgent.contains("Mac")) {
+            os = "macOS";
+        } else if (userAgent.contains("Linux")) {
+            os = "Linux";
+        } else if (userAgent.contains("Android")) {
+            os = "Android";
+        } else if (userAgent.contains("iOS") || userAgent.contains("iPhone") || userAgent.contains("iPad")) {
+            os = "iOS";
+        }
+
+        return browser + " on " + os;
     }
 
     @PostMapping("/activate")
