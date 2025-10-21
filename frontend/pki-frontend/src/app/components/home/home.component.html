@@ -2,6 +2,18 @@
   <h2>Home</h2>
   <p>Uspešno si ulogovan.</p>
   
+  <div class="navigation-links">
+    <a routerLink="/csr-upload" class="nav-link">
+      <mat-icon>cloud_upload</mat-icon>
+      CSR Upload
+    </a>
+    
+    <a routerLink="/active-sessions" class="nav-link">
+      <mat-icon>devices</mat-icon>
+      Active Sessions
+    </a>
+  </div>
+  
   <button (click)="logout()" class="logout-btn">Logout</button>
 </div>
 

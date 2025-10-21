@@ -19,6 +19,7 @@ import { CaGuard } from './guards/ca.guard';
 import { CaShellComponent } from './components/ca/ca-shell/ca-shell.component';
 import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermediate/ca-issue-intermediate.component';
 import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
+import { CsrUploadComponent } from './components/csr-upload/csr-upload.component';
 
 const routes: Routes = [
 
@@ -46,6 +47,7 @@ const routes: Routes = [
   { path: 'activate', component: ActivationComponent },
   { path: 'home', component: HomeComponent },
   { path: 'active-sessions', component: ActiveSessionsComponent },
+  { path: 'csr-upload', component: CsrUploadComponent },
   { path: 'admin/ca', component: AdminCaComponent, canActivate: [AdminGuard] },
   { path: 'admin/ca/intermediate', component: AdminIntermediateComponent, canActivate: [AdminGuard] },
   { path: 'forgot-password', component: ForgotPasswordComponent },
