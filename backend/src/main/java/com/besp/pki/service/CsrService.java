@@ -210,25 +210,52 @@ public class CsrService {
         String keystorePass = generateRandomPassword(24);
         
         try {
-            // For now, just store metadata without actual keystore file
-            // TODO: Implement real certificate generation from CSR
-            cert.setKeystorePath(keystoreDir + "/" + alias + ".p12");
+            // Create .pem file in keystores directory
+            String pemFileName = alias + ".pem";
+            String pemFilePath = keystoreDir + "/" + pemFileName;
+            
+            // Create mock PEM content for now
+            String pemContent = createMockPemContent(cert);
+            
+            // Write PEM file to keystores directory
+            java.nio.file.Files.createDirectories(java.nio.file.Path.of(keystoreDir));
+            java.nio.file.Files.write(java.nio.file.Path.of(pemFilePath), pemContent.getBytes());
+            
+            // Set metadata - pointing to .pem file instead of .p12
+            cert.setKeystorePath(pemFilePath);
             cert.setKeystoreAlias(alias);
             cert.setEncKeystorePass(cryptoSealService.seal(keystorePass));
             
-            // Store mock PEM content
-            cert.setCertificatePem("-----BEGIN CERTIFICATE-----\nMOCK-EE-CERTIFICATE-" + cert.getSerialNumber() + "\n-----END CERTIFICATE-----");
+            // Store PEM content in database as well
+            cert.setCertificatePem(pemContent);
             
-            log.info("Created EE certificate metadata (keystore file creation skipped for now)");
+            log.info("Created EE certificate as PEM file: {}", pemFilePath);
             
         } catch (Exception e) {
-            log.error("Failed to create certificate metadata: {}", e.getMessage());
-            throw new RuntimeException("Failed to create certificate metadata", e);
+            log.error("Failed to create PEM file: {}", e.getMessage());
+            throw new RuntimeException("Failed to create PEM file", e);
         }
         
         return cert;
     }
     
+    
+    private String createMockPemContent(CertificateRecord cert) {
+        StringBuilder pem = new StringBuilder();
+        pem.append("-----BEGIN CERTIFICATE-----\n");
+        pem.append("MOCK EE CERTIFICATE\n");
+        pem.append("Serial Number: ").append(cert.getSerialNumber()).append("\n");
+        pem.append("Subject: ").append(cert.getSubjectDn()).append("\n");
+        pem.append("Issuer: ").append(cert.getIssuerDn()).append("\n");
+        pem.append("Not Before: ").append(cert.getNotBefore()).append("\n");
+        pem.append("Not After: ").append(cert.getNotAfter()).append("\n");
+        pem.append("Key Algorithm: ").append(cert.getPublicKeyAlgorithm()).append("\n");
+        pem.append("Key Size: ").append(cert.getKeySize()).append("\n");
+        pem.append("Signature Algorithm: ").append(cert.getSignatureAlgorithm()).append("\n");
+        pem.append("Fingerprint: ").append(cert.getFingerprintSha256()).append("\n");
+        pem.append("-----END CERTIFICATE-----\n");
+        return pem.toString();
+    }
     
     private String generateRandomPassword(int length) {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
