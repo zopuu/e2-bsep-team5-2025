@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { Observable } from 'rxjs';
 import { PagedResponse, CertificateListItem, RevokeRequest } from '../models/certificate';
 import { CreateCaUserRequest, UserDto } from '../models/user';
+import { map } from 'rxjs/operators';
 
 
 @Injectable({ providedIn: 'root' })
@@ -37,8 +38,25 @@ export class AdminApiService {
       headers: this.authHeaders()
     });
   }
-  listActiveCaIssuers(): Observable<CertificateListItem[]> {
-    return this.listCertificates();
+  listActiveCaIssuers() {
+    // ask for ACTIVE CA certs, first page with a generous size
+    return this.listCertificatesPaged({
+      ca: true,
+      status: 'ACTIVE',
+      page: 0,
+      size: 200
+    }).pipe(
+      map((res: PagedResponse<CertificateListItem>) => {
+        const now = Date.now();
+        // only issuers that are CA, ACTIVE, and currently valid
+        return (res.content || []).filter(i =>
+          i.ca === true &&
+          i.status === 'ACTIVE' &&
+          new Date(i.notBefore).getTime() <= now &&
+          new Date(i.notAfter).getTime() >= now
+        );
+      })
+    );
   }
   createIntermediateCA(body: {
     issuerRecordId: number;
@@ -84,19 +102,19 @@ export class AdminApiService {
     );
   }
   listCaUsers(): Observable<UserDto[]> {
-  const params = new HttpParams().set('role', 'CA_USER');
-  return this.http.get<UserDto[]>(`${this.apiUrl}/api/admin/users`, {
-    headers: this.authHeaders(),
-    params
-  });
-}
+    const params = new HttpParams().set('role', 'CA_USER');
+    return this.http.get<UserDto[]>(`${this.apiUrl}/api/admin/users`, {
+      headers: this.authHeaders(),
+      params
+    });
+  }
 
-/** Create (invite) a new CA user */
-createCaUser(body: CreateCaUserRequest): Observable<{ success: boolean; message: string; data?: any }> {
-  return this.http.post<{ success: boolean; message: string; data?: any }>(
-    `${this.apiUrl}/api/admin/users/ca`,
-    body,
-    { headers: this.authHeaders() }
-  );
-}
+  /** Create (invite) a new CA user */
+  createCaUser(body: CreateCaUserRequest): Observable<{ success: boolean; message: string; data?: any }> {
+    return this.http.post<{ success: boolean; message: string; data?: any }>(
+      `${this.apiUrl}/api/admin/users/ca`,
+      body,
+      { headers: this.authHeaders() }
+    );
+  }
 }
