@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -113,11 +114,12 @@ public class CsrController {
     
     @PostMapping("/issue")
     @PreAuthorize("hasAnyRole('ADMIN', 'CA_USER', 'REGULAR_USER')")
-    public ResponseEntity<CertificateIssueResponse> issueCertificate(@Valid @RequestBody CertificateIssueRequest request) {
+    public ResponseEntity<CertificateIssueResponse> issueCertificate(@Valid @RequestBody CertificateIssueRequest request, Authentication auth) {
         try {
             log.info("Received certificate issue request for CN: {}", request.getCsrData().getCommonName());
             
-            CertificateIssueResponse response = csrService.issueCertificate(request);
+            String currentUserEmail = auth != null ? auth.getName() : null;
+            CertificateIssueResponse response = csrService.issueCertificate(request, currentUserEmail);
             
             if (response.isSuccess()) {
                 log.info("Certificate issued successfully with ID: {}", response.getCertificateId());
@@ -131,6 +133,24 @@ public class CsrController {
             log.error("Unexpected error during certificate issuance: {}", e.getMessage());
             return ResponseEntity.internalServerError()
                 .body(CertificateIssueResponse.error("Unexpected error: " + e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/my-certificates")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CA_USER', 'REGULAR_USER')")
+    public ResponseEntity<?> getMyCertificates(Authentication auth) {
+        try {
+            String currentUserEmail = auth != null ? auth.getName() : null;
+            if (currentUserEmail == null) {
+                return ResponseEntity.badRequest().body("User not authenticated");
+            }
+            
+            List<CaIssuerDto> myCertificates = csrService.getMyCertificates(currentUserEmail);
+            return ResponseEntity.ok(myCertificates);
+            
+        } catch (Exception e) {
+            log.error("Failed to get my certificates: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
     }
 }

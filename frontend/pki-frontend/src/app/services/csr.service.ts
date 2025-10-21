@@ -61,4 +61,11 @@ export class CsrService {
       { headers: this.getAuthHeaders() }
     );
   }
+
+  getMyCertificates(): Observable<CaIssuerDto[]> {
+    return this.http.get<CaIssuerDto[]>(
+      `${this.apiUrl}/my-certificates`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
 }

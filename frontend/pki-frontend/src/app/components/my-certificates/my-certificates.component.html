@@ -1,0 +1,63 @@
+<div class="toolbar">
+  <div class="header">
+    <h2>Moji Sertifikati</h2>
+    <button class="btn primary" (click)="refreshCertificates()" [disabled]="isLoading">
+      <span class="refresh-icon">↻</span>
+      <span>Osveži</span>
+    </button>
+  </div>
+</div>
+
+<div class="list" *ngIf="!isLoading; else busy">
+  <div class="row-card" *ngFor="let cert of certificates">
+    <div class="row-left">
+      <div class="type">
+        <span class="pill ee">END-ENTITY</span>
+      </div>
+
+      <div class="line">
+        <span class="label">Subject</span>
+        <span class="value dn">{{ cert.subjectDn }}</span>
+      </div>
+
+      <div class="line">
+        <span class="label">Issuer</span>
+        <span class="value dn">{{ cert.issuerDn }}</span>
+      </div>
+
+      <div class="meta">
+        <span class="mono">SN {{ cert.serialNumber }}</span>
+        <button class="copy-btn" type="button" (click)="copy(cert.serialNumber)" aria-label="Copy serial">Copy</button>
+      </div>
+    </div>
+
+    <div class="row-right">
+      <div class="badges">
+        <span class="chip">ACTIVE</span>
+        <span class="chip">EE</span>
+      </div>
+
+      <div class="valid">
+        <span class="label">Valid to</span>
+        <span class="value">{{ cert.notAfter | date:'yyyy-MM-dd HH:mm' }}</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn text" type="button" (click)="downloadCertificate(cert)">Download PEM</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty" *ngIf="certificates.length === 0">
+    <div class="no-certificates">
+      <mat-icon>certificate</mat-icon>
+      <h3>Nema sertifikata</h3>
+      <p>Nemate još uvek izdate End-Entity sertifikate.</p>
+      <p>Idite na <a routerLink="/csr-upload">CSR Upload</a> stranicu da kreirate novi sertifikat.</p>
+    </div>
+  </div>
+</div>
+
+<ng-template #busy>
+  <div class="loading">Učitavanje sertifikata…</div>
+</ng-template>

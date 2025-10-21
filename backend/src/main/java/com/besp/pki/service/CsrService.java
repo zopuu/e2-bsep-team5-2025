@@ -5,6 +5,7 @@ import com.besp.pki.entity.CertificateRecord;
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
 import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.repository.CertificateRecordRepository;
+import com.besp.pki.repository.UserRepository;
 import com.besp.pki.x509.CsrParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ public class CsrService {
     private static final Logger log = LoggerFactory.getLogger(CsrService.class);
     
     private final CertificateRecordRepository certificateRecordRepository;
+    private final UserRepository userRepository;
     private final KeyStoreService keyStoreService;
     private final CryptoSealService cryptoSealService;
     
@@ -32,10 +34,12 @@ public class CsrService {
     
     private static final SecureRandom RNG = new SecureRandom();
     
-    public CsrService(CertificateRecordRepository certificateRecordRepository, 
-                     KeyStoreService keyStoreService, 
-                     CryptoSealService cryptoSealService) {
+    public CsrService(CertificateRecordRepository certificateRecordRepository,
+                      UserRepository userRepository,
+                      KeyStoreService keyStoreService,
+                      CryptoSealService cryptoSealService) {
         this.certificateRecordRepository = certificateRecordRepository;
+        this.userRepository = userRepository;
         this.keyStoreService = keyStoreService;
         this.cryptoSealService = cryptoSealService;
     }
@@ -88,7 +92,7 @@ public class CsrService {
             .collect(Collectors.toList());
     }
     
-    public CertificateIssueResponse issueCertificate(CertificateIssueRequest request) {
+    public CertificateIssueResponse issueCertificate(CertificateIssueRequest request, String currentUserEmail) {
         try {
             log.info("Issuing certificate for CSR with CN: {}", request.getCsrData().getCommonName());
             
@@ -116,8 +120,8 @@ public class CsrService {
                 return CertificateIssueResponse.error("Requested validity period exceeds CA certificate validity");
             }
             
-            // Create certificate record and store in keystore
-            CertificateRecord newCert = createEndEntityCertificate(request, caCert);
+                // Create certificate record and store in keystore
+                CertificateRecord newCert = createEndEntityCertificate(request, caCert, currentUserEmail);
             CertificateRecord savedCert = certificateRecordRepository.save(newCert);
             
             log.info("Certificate issued successfully with ID: {}", savedCert.getId());
@@ -139,7 +143,7 @@ public class CsrService {
         }
     }
     
-    private CertificateRecord createEndEntityCertificate(CertificateIssueRequest request, CertificateRecord caCert) {
+    private CertificateRecord createEndEntityCertificate(CertificateIssueRequest request, CertificateRecord caCert, String currentUserEmail) {
         CertificateRecord cert = new CertificateRecord();
         
         // Generate serial number
@@ -201,9 +205,17 @@ public class CsrService {
         // Set issuer reference
         cert.setIssuer(caCert);
         
-        // Set audit fields
-        cert.setCreatedAt(now);
-        cert.setCreatedBy("CSR-ISSUE");
+            // Set audit fields
+            cert.setCreatedAt(now);
+            cert.setCreatedBy("CSR-ISSUE");
+            
+            // Set owner to current user (who uploaded CSR)
+            if (currentUserEmail != null) {
+                userRepository.findByEmail(currentUserEmail).ifPresent(user -> {
+                    cert.setOwner(user);
+                    log.info("Setting owner to current user: {} (ID: {})", currentUserEmail, user.getId());
+                });
+            }
         
         // Create keystore entry - SAME AS ROOT/INTERMEDIATE
         String alias = "ee-" + System.currentTimeMillis();
@@ -277,5 +289,18 @@ public class CsrService {
         
         // Additional validations can be added here
         log.debug("CSR data validation passed");
+    }
+    
+    public List<CaIssuerDto> getMyCertificates(String userEmail) {
+        log.info("Getting certificates for user: {}", userEmail);
+        
+        return userRepository.findByEmail(userEmail)
+            .map(user -> {
+                log.info("Found user: {} with ID: {}", userEmail, user.getId());
+                List<CaIssuerDto> certificates = certificateRecordRepository.findByOwnerAndType(user, CertificateType.END_ENTITY);
+                log.info("Found {} End-Entity certificates for user", certificates.size());
+                return certificates;
+            })
+            .orElse(List.of());
     }
 }

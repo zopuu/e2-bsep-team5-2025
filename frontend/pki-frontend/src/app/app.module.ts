@@ -25,6 +25,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
@@ -38,6 +39,7 @@ import { CaShellComponent } from './components/ca/ca-shell/ca-shell.component';
 import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermediate/ca-issue-intermediate.component';
 import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
 import { CsrUploadComponent } from './components/csr-upload/csr-upload.component';
+import { MyCertificatesComponent } from './components/my-certificates/my-certificates.component';
 
 @NgModule({
   declarations: [
@@ -59,7 +61,8 @@ import { CsrUploadComponent } from './components/csr-upload/csr-upload.component
     CaShellComponent,
     CaIssueIntermediateComponent,
     ActiveSessionsComponent,
-    CsrUploadComponent
+    CsrUploadComponent,
+    MyCertificatesComponent
   ],
   imports: [
     BrowserModule,
@@ -78,6 +81,7 @@ import { CsrUploadComponent } from './components/csr-upload/csr-upload.component
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatCardModule,
     FormsModule
   ],
   providers: [
