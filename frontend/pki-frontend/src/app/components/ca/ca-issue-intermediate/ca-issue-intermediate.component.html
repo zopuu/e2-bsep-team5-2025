@@ -1,88 +1,121 @@
-<!-- src/app/components/ca/ca-issue-intermediate/ca-issue-intermediate.component.html -->
 <div class="wrap">
-    <div class="header">
-        <h2>Issue Intermediate CA</h2>
-    </div>
+  <h1>Intermediate CA</h1>
+  <p class="muted">Issue a CA certificate signed by an existing CA.</p>
 
-    <div *ngIf="toast.type" class="toast" [class.ok]="toast.type==='success'" [class.err]="toast.type==='error'">
-        {{ toast.text }}
-    </div>
-
+  <form [formGroup]="form" (ngSubmit)="submit()" class="card">
     <div class="grid">
-        <div class="card">
-            <form [formGroup]="form" (ngSubmit)="submit()" class="form">
-                <div class="row">
-                    <label>Issuer</label>
-                    <select formControlName="issuerRecordId">
-                        <option [ngValue]="null" disabled>Select issuer…</option>
-                        <option *ngFor="let i of issuers" [ngValue]="i.id">
-                            {{ i.subjectDn }} (valid to {{ i.notAfter | date:'shortDate' }})
-                        </option>
-                    </select>
-                    <div class="err" *ngIf="form.get('issuerRecordId')?.touched && form.get('issuerRecordId')?.invalid">
-                        Required</div>
-                </div>
 
-                <div class="row">
-                    <label>Subject (DN)</label>
-                    <div formGroupName="subject">
-                        <div class="row two">
-                            <input placeholder="CN" formControlName="commonName">
-                            <input placeholder="O" formControlName="organization">
-                        </div>
+      <!-- Issuer -->
+      <label>
+        <span>Issuer (existing CA) *</span>
+        <select formControlName="issuerRecordId">
+          <option [ngValue]="null" disabled>Select issuer</option>
+          <option *ngFor="let i of issuers" [ngValue]="i.id">
+            {{ i.subjectDn }}
+          </option>
+        </select>
+        <small class="err" *ngIf="form.controls['issuerRecordId'].touched && form.controls['issuerRecordId'].invalid">
+          Issuer is required
+        </small>
+      </label>
 
-                        <div class="row three">
-                            <input placeholder="OU" formControlName="organizationalUnit">
-                            <input placeholder="L" formControlName="locality">
-                            <input placeholder="ST" formControlName="state">
-                        </div>
+      <!-- Subject DN (group) -->
+      <ng-container formGroupName="subject">
+        <label>
+          <span>Common Name (CN) *</span>
+          <input formControlName="commonName" placeholder="Team5 Intermediate CA" />
+          <small class="err" *ngIf="form.get('subject.commonName')?.touched && form.get('subject.commonName')?.invalid">
+            Required (max 128)
+          </small>
+        </label>
 
-                        <div>
-                            <input placeholder="C" formControlName="country">
-                        </div>
-                    </div>
-                </div>
+        <label>
+          <span>Organization (O)</span>
+          <input formControlName="organization" placeholder="FTN" [disabled]="orgLocked"/>
+          <small class="muted" *ngIf="orgLocked">Locked to your organization ({{ caOrg || '—' }})</small>
+        </label>
 
-                <div class="row two">
-                    <div>
-                        <label>Years valid</label>
-                        <input type="number" formControlName="yearsValid" min="1" max="20">
-                    </div>
-                    <div>
-                        <label>pathLenConstraint</label>
-                        <input type="number" formControlName="pathLenConstraint" min="0">
-                    </div>
-                </div>
+        <label>
+          <span>Org Unit (OU)</span>
+          <input formControlName="organizationalUnit" placeholder="Security" />
+        </label>
 
-                <div class="row">
-                    <label>CRL Distribution Point (URL)</label>
-                    <input formControlName="crlDistributionPoint">
-                </div>
-                <div class="row">
-                    <label>OCSP URL</label>
-                    <input formControlName="ocspUrl">
-                </div>
+        <label>
+          <span>Country (C)</span>
+          <input formControlName="country" placeholder="RS" maxlength="2" />
+          <small class="err" *ngIf="form.get('subject.country')?.invalid && form.get('subject.country')?.touched">
+            Two uppercase letters (e.g. RS)
+          </small>
+        </label>
 
-                <div class="row">
-                    <button class="btn primary" [disabled]="issuing">Issue Intermediate</button>
-                </div>
-            </form>
-        </div>
+        <label>
+          <span>State/Province (ST)</span>
+          <input formControlName="state" placeholder="Vojvodina" />
+        </label>
 
-        <div class="card" *ngIf="result">
-            <h3 class="card-title">Issued</h3>
-            <div class="kv">
-                <div><b>Serial:</b> {{ result.serialNumber }}</div>
-                <div><b>Subject:</b> {{ result.subjectDn }}</div>
-                <div><b>Issuer:</b> {{ result.issuerDn }}</div>
-                <div><b>Valid:</b> {{ result.notBefore | date:'short' }} → {{ result.notAfter | date:'short' }}</div>
-                <div><b>Is CA:</b> {{ result.isCa ? 'Yes' : 'No' }}</div>
-                <div><b>pathLen:</b> {{ result.pathLenConstraint ?? '—' }}</div>
-            </div>
-            <div><b>Chain (leaf → root):</b></div>
-            <ul>
-                <li *ngFor="let s of result.chainSubjectDns">{{ s }}</li>
-            </ul>
-        </div>
+        <label>
+          <span>Locality (L)</span>
+          <input formControlName="locality" placeholder="Novi Sad" />
+        </label>
+      </ng-container>
+
+      <!-- Other params -->
+      <label>
+        <span>Years valid *</span>
+        <input type="number" formControlName="yearsValid" />
+        <small class="err" *ngIf="form.errors?.['beyondIssuer']">
+          Issuer expires: {{ selectedIssuer?.notAfter | date:'medium' }}.
+        </small>
+      </label>
+
+      <label>
+        <span>pathLenConstraint</span>
+        <input type="number" formControlName="pathLenConstraint" />
+        <small class="muted">0 = can not issue CA below itself, only EE</small>
+        <small class="err" *ngIf="form.errors?.['issuerPathLenZero']">
+          Chosen issuer has pathLen=0 and can not issue CA.
+        </small>
+        <small class="err" *ngIf="form.errors?.['pathLenInvalid']">
+          pathLenConstraint has to be integer ≥ 0.
+        </small>
+        <small class="err" *ngIf="form.errors?.['pathLenTooHigh']">
+          Max allowed: {{ form.errors?.['pathLenTooHigh']?.maxAllowed }}
+        </small>
+      </label>
+
+      <label>
+        <span>CRL Distribution Point (URL)</span>
+        <input formControlName="crlDistributionPoint" placeholder="http://pki.example.rs/crl/intermediate.crl" />
+      </label>
+
+      <label>
+        <span>OCSP URL</span>
+        <input formControlName="ocspUrl" placeholder="http://ocsp.example.rs" />
+      </label>
     </div>
+
+    <div class="actions">
+      <button type="submit" [disabled]="issuing || form.invalid">Issue Intermediate</button>
+      <span *ngIf="issuing" class="spinner">Working…</span>
+    </div>
+
+    <p *ngIf="serverError" class="err big">{{ serverError }}</p>
+  </form>
+
+  <div *ngIf="result" class="result card">
+    <h3>Intermediate CA issued ✅</h3>
+    <ul>
+      <li><b>Subject:</b> {{ result.subjectDn }}</li>
+      <li><b>Issuer:</b> {{ result.issuerDn }}</li>
+      <li><b>Serial:</b> {{ result.serialNumber }}</li>
+      <li><b>Valid:</b> {{ result.notBefore | date:'medium' }} → {{ result.notAfter | date:'medium' }}</li>
+      <li><b>Is CA:</b> {{ result.isCa ? 'Yes' : 'No' }}</li>
+      <li><b>pathLen:</b> {{ result.pathLenConstraint ?? '—' }}</li>
+      <li *ngIf="result.chainSubjectDns?.length"><b>Chain</b>
+        <ul>
+          <li *ngFor="let s of result.chainSubjectDns">{{ s }}</li>
+        </ul>
+      </li>
+    </ul>
+  </div>
 </div>
