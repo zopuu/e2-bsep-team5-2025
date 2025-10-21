@@ -25,13 +25,14 @@ public class JwtUtil {
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String subject, String role) {
+    public String generateToken(String subject, String role, String organization) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
                 .setSubject(subject)
                 .claim("roles", List.of(role.startsWith("ROLE_") ? role : "ROLE_" + role))
+                .claim("organization", organization == null ? "" : organization)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(secretKey, SignatureAlgorithm.HS256)

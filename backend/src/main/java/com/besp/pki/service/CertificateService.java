@@ -360,10 +360,9 @@ public class CertificateService {
         User caUser = userService.findByEmail(caUserEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown CA user"));
 
-        // Fetch issuer and check scope
+        // === issuer scope check (owner-based) - unchanged ===
         CertificateRecord issuer = repo.findById(req.issuerRecordId())
                 .orElseThrow(() -> new IllegalArgumentException("Issuer not found: " + req.issuerRecordId()));
-
         if (!issuer.isCa() || issuer.getStatus() != CertificateStatus.ACTIVE) {
             throw new IllegalArgumentException("Issuer is not an active CA");
         }
@@ -371,32 +370,54 @@ public class CertificateService {
         if (issuer.getNotBefore().isAfter(now) || issuer.getNotAfter().isBefore(now)) {
             throw new IllegalArgumentException("Issuer is not currently valid");
         }
-
         boolean okOwner = issuer.getOwner() != null && issuer.getOwner().getId() != null
                 && issuer.getOwner().getId().equals(caUser.getId());
         boolean okOrg = issuer.getOwner() != null && issuer.getOwner().getOrganization() != null
                 && issuer.getOwner().getOrganization().equals(caUser.getOrganization());
-
         if (!okOwner && !okOrg) {
             throw new IllegalArgumentException("Issuer is outside your CA scope");
         }
 
-        // Force the new Intermediate's owner to be this CA user
+        // === NEW: force/validate organization on the subject ===
+        String userOrg = Optional.ofNullable(caUser.getOrganization()).map(String::trim).orElse("");
+        if (userOrg.isEmpty()) {
+            throw new IllegalStateException("Your account is missing organization. Contact an admin.");
+        }
+        String reqOrg = Optional.ofNullable(req.subject().organization()).map(String::trim).orElse("");
+
+        NameDto enforcedSubject;
+        if (reqOrg.isEmpty()) {
+            // Auto-fill O to the CA user’s org
+            enforcedSubject = new NameDto(
+                    req.subject().commonName(),
+                    userOrg,
+                    req.subject().organizationalUnit(),
+                    req.subject().country(),
+                    req.subject().state(),
+                    req.subject().locality()
+            );
+        } else if (!reqOrg.equals(userOrg)) {
+            throw new IllegalArgumentException("Subject.O must be '" + userOrg + "' for your organization.");
+        } else {
+            enforcedSubject = req.subject(); // matches, keep as-is
+        }
+
+        // Force owner to this CA user and reuse core logic
         var caScopedReq = new IntermediateCaRequest(
                 req.issuerRecordId(),
-                req.subject(),
+                enforcedSubject,
                 req.yearsValid(),
                 req.pathLenConstraint(),
                 req.crlDistribuitionPoints(),
                 req.authorityInfoAccessOcsp(),
                 req.crlDistributionPoint(),
                 req.ocspUrl(),
-                caUser.getId()  // <— owner is the CA user
+                caUser.getId()
         );
 
-        // Reuse existing core logic (admin method) without changing it
         return this.issueIntermediateCA(caScopedReq, caUserEmail);
     }
+
 
 
 }

@@ -2,6 +2,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CaApiService, CaIssuerDto, CertificateResponse, IntermediateCaRequest } from '../../../services/ca.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-ca-issue-intermediate',
@@ -16,10 +17,12 @@ export class CaIssueIntermediateComponent implements OnInit {
   issuing = false;
   toast: { type: 'success'|'error'|'', text: string } = { type:'', text:'' };
   result?: CertificateResponse;
+  caOrg: string | null = null;
 
-  constructor(private fb: FormBuilder, private api: CaApiService) {}
+  constructor(private fb: FormBuilder, private api: CaApiService, private auth: AuthService) {}
 
   ngOnInit(): void {
+    this.caOrg = this.auth.getOrganization();
     this.form = this.fb.group({
       issuerRecordId: [null, Validators.required],
       subject: this.fb.group({
@@ -36,6 +39,13 @@ export class CaIssueIntermediateComponent implements OnInit {
       ocspUrl: ['']
     });
 
+    // Prefill & lock Organization to the CA user's org
+    if (this.caOrg) {
+      const orgCtrl = (this.form.get('subject') as FormGroup).get('organization')!;
+      orgCtrl.setValue(this.caOrg, { emitEvent: false });
+      orgCtrl.disable({ emitEvent: false });
+    }
+
     this.loading = true;
     this.api.listIssuers().subscribe({
       next: res => { this.issuers = res; this.loading = false; },
@@ -45,7 +55,7 @@ export class CaIssueIntermediateComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
-    const payload: IntermediateCaRequest = this.form.value;
+    const payload: IntermediateCaRequest = this.form.getRawValue();
     this.issuing = true;
     this.api.createIntermediateCAAsCa(payload).subscribe({
       next: res => {

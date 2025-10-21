@@ -110,4 +110,12 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem('token');
   }
+  getOrganization(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+    const payload = this.decodeJwt<any>(token);
+    if (!payload) return null;
+    // support a few common claim names
+    return payload.organization || payload.org || payload.orgName || null;
+  }
 }
