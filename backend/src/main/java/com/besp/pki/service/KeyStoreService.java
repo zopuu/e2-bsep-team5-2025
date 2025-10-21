@@ -74,4 +74,31 @@ public class KeyStoreService {
             throw new RuntimeException("KeyStore readChain failed", e);
         }
     }
+
+    public EntryRef storeTrustedCertificate(String baseDir, String alias, char[] entryPass, X509Certificate certificate) {
+        try {
+            File dir = new File(baseDir);
+            if (!dir.exists()) dir.mkdirs();
+            File ksFile = new File(dir, alias + ".p12");
+
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            if (ksFile.exists()) {
+                ks.load(Files.newInputStream(ksFile.toPath()), entryPass);
+            } else {
+                ks.load(null, null);
+            }
+            
+            KeyStore.ProtectionParameter prot = new KeyStore.PasswordProtection(entryPass);
+            KeyStore.TrustedCertificateEntry entry = new KeyStore.TrustedCertificateEntry(certificate);
+            ks.setEntry(alias, entry, prot);
+            
+            try (FileOutputStream fos = new FileOutputStream(ksFile)) {
+                ks.store(fos, entryPass);
+            }
+            
+            return new EntryRef(ksFile.getPath(), alias);
+        } catch (Exception e) {
+            throw new RuntimeException("KeyStore storeTrustedCertificate failed: " + e.getMessage(), e);
+        }
+    }
 }

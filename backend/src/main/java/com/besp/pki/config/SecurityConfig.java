@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**","/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/ca/**").hasAnyRole("ADMIN", "CA_USER")
+                        .requestMatchers("/api/csr/**").hasAnyRole("ADMIN", "CA_USER", "REGULAR_USER")
                         // Require authentication for all other requests
                         .anyRequest().authenticated()
                 )

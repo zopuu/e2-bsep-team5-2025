@@ -2,7 +2,9 @@ package com.besp.pki.repository;
 
 import com.besp.pki.dto.CaIssuerDto;
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
+import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.entity.CertificateRecord;
+import com.besp.pki.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -52,4 +54,9 @@ public interface CertificateRecordRepository extends
     List<CaIssuerDto> findActiveCaIssuerDtosByOwnerOrganization(String org,
                                                                 CertificateStatus status,
                                                                 Instant now);
+    
+    // Find certificates by owner and type (without LOB fields) - return DTOs directly
+    @Query("SELECT new com.besp.pki.dto.CaIssuerDto(c.id, c.subjectDn, c.issuerDn, c.serialNumber, c.ca, c.notBefore, c.notAfter) " +
+           "FROM CertificateRecord c WHERE c.owner = :owner AND c.type = :type")
+    List<CaIssuerDto> findByOwnerAndType(@Param("owner") User owner, @Param("type") CertificateType type);
 }

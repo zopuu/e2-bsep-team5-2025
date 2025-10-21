@@ -1,0 +1,143 @@
+<div class="csr-upload-container">
+  <h2>CSR Upload</h2>
+  
+  <form [formGroup]="csrForm" (ngSubmit)="onSubmit()" class="csr-form">
+    
+    <!-- File Upload Section -->
+    <div class="form-section">
+      <h3>1. Upload CSR File</h3>
+      
+      <div class="file-upload-container">
+        <input 
+          type="file" 
+          id="csrFile" 
+          accept=".pem,.csr"
+          (change)="onFileSelected($event)"
+          class="file-input">
+        
+        <label for="csrFile" class="file-upload-label">
+          <mat-icon>cloud_upload</mat-icon>
+          Choose CSR File (.pem or .csr)
+        </label>
+        
+        <div class="file-info" *ngIf="selectedFile">
+          <mat-icon>description</mat-icon>
+          <span>{{ getFileName() }}</span>
+        </div>
+      </div>
+      
+      <!-- Loading indicator -->
+      <div class="loading" *ngIf="isLoading">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Parsing CSR...</span>
+      </div>
+    </div>
+
+    <!-- CSR Data Display -->
+    <div class="form-section" *ngIf="showCsrData && csrData">
+      <h3>2. CSR Information</h3>
+      
+      <div class="csr-data-display">
+        <div class="data-row">
+          <label>Common Name (CN):</label>
+          <span>{{ csrData.commonName }}</span>
+        </div>
+        
+        <div class="data-row" *ngIf="csrData.organization">
+          <label>Organization (O):</label>
+          <span>{{ csrData.organization }}</span>
+        </div>
+        
+        <div class="data-row" *ngIf="csrData.organizationalUnit">
+          <label>Organizational Unit (OU):</label>
+          <span>{{ csrData.organizationalUnit }}</span>
+        </div>
+        
+        <div class="data-row" *ngIf="csrData.locality">
+          <label>Locality (L):</label>
+          <span>{{ csrData.locality }}</span>
+        </div>
+        
+        <div class="data-row" *ngIf="csrData.state">
+          <label>State (ST):</label>
+          <span>{{ csrData.state }}</span>
+        </div>
+        
+        <div class="data-row" *ngIf="csrData.country">
+          <label>Country (C):</label>
+          <span>{{ csrData.country }}</span>
+        </div>
+        
+        <div class="data-row" *ngIf="csrData.emailAddress">
+          <label>Email Address:</label>
+          <span>{{ csrData.emailAddress }}</span>
+        </div>
+        
+        <div class="data-row">
+          <label>Key Usage:</label>
+          <span>{{ csrData.keyUsage }}</span>
+        </div>
+        
+        <div class="data-row">
+          <label>Extended Key Usage:</label>
+          <span>{{ csrData.extendedKeyUsage }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CA Certificate Selection -->
+    <div class="form-section" *ngIf="showCsrData && csrData">
+      <h3>3. Select CA Certificate</h3>
+      
+      <div class="form-group">
+        <label for="caCertificate">CA Certificate:</label>
+        <select 
+          id="caCertificate" 
+          formControlName="caCertificateId" 
+          class="form-control">
+          <option value="">Select CA Certificate</option>
+          <option 
+            *ngFor="let cert of caCertificates" 
+            [value]="cert.id">
+            {{ cert.subjectDn }} (Valid until: {{ formatDate(cert.notAfter) }})
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Validity Period -->
+    <div class="form-section" *ngIf="showCsrData && csrData">
+      <h3>4. Certificate Validity</h3>
+      
+      <div class="form-group">
+        <label for="validityDays">Validity Period (days):</label>
+        <input 
+          type="number" 
+          id="validityDays" 
+          formControlName="validityDays" 
+          class="form-control"
+          min="1" 
+          max="3650">
+        <small class="form-text">Maximum 10 years (3650 days)</small>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-section" *ngIf="showCsrData && csrData">
+      <button 
+        type="submit" 
+        class="btn btn-primary"
+        [disabled]="!csrForm.valid || isLoading">
+        <span *ngIf="!isLoading">Generate Certificate</span>
+        <span *ngIf="isLoading">Generating Certificate...</span>
+      </button>
+      
+      <!-- Loading indicator for certificate generation -->
+      <div class="loading" *ngIf="isLoading">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Issuing certificate...</span>
+      </div>
+    </div>
+
+  </form>
+</div>

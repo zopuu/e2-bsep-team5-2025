@@ -1,0 +1,123 @@
+:host {
+  display: block;
+  --card: rgba(255, 255, 255, 0.08);
+  --card-strong: rgba(10, 14, 30, 0.55);
+  --card-border: rgba(255, 255, 255, 0.14);
+  --row: rgba(255, 255, 255, 0.06);
+  --row-hover: rgba(255, 255, 255, 0.10);
+  --hairline: rgba(255, 255, 255, 0.12);
+  --muted: #aab2c0;
+}
+
+/* centered filters from before */
+.toolbar { display:flex; justify-content:center; margin: 14px 0 12px; }
+.header {
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center; max-width:980px; width:100%;
+  padding:10px 12px; border-radius:14px;
+  border:1px solid var(--card-border);
+  background: linear-gradient(180deg, var(--card) 0%, var(--card-strong) 100%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255,255,255,.05);
+  
+  h2 {
+    margin: 0;
+    color: inherit;
+    flex: 1;
+  }
+}
+
+.btn { padding:8px 12px; border-radius:12px; border:1px solid var(--hairline);
+  background:rgba(255,255,255,.04); color:inherit; cursor:pointer;
+  display: flex; align-items: center; gap: 6px;
+  
+  .refresh-icon { font-size: 18px; font-weight: bold; }
+  span { font-size: 14px; }
+  
+  &.primary { background: rgba(88,199,250,.14); border-color: rgba(88,199,250,.35); }
+  &.danger  { background: rgba(255,99,132,.14); border-color: rgba(255,99,132,.35); }
+  &.ghost   { border-color: transparent; background: transparent; }
+  &.text    { border-color: transparent; background: transparent; color: var(--muted); }
+}
+
+/* LIST OF ROW CARDS */
+.list { display:flex; flex-direction:column; gap:12px; }
+
+/* one certificate */
+.row-card {
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  background: linear-gradient(180deg, var(--card) 0%, var(--card-strong) 100%);
+  box-shadow: 0 12px 28px rgba(0,0,0,.22);
+}
+.row-card:hover { background: linear-gradient(180deg, var(--row-hover) 0%, var(--card-strong) 100%); }
+
+.row-left { display:flex; flex-direction:column; gap:8px; }
+.row-right { display:flex; flex-direction:column; gap:8px; align-items:flex-end; min-width:200px; }
+
+.type { display:flex; gap:6px; }
+.pill { padding:4px 8px; border-radius:8px; font-size:11px; font-weight:600; text-transform:uppercase;
+  background:rgba(255,255,255,.08); color:var(--muted);
+  &.root { background:rgba(255,99,132,.2); color:#ff6384; }
+  &.int { background:rgba(255,193,7,.2); color:#ffc107; }
+  &.ee { background:rgba(88,199,250,.2); color:#58c7fa; }
+}
+
+.line { display:flex; flex-direction:column; gap:2px; }
+.label { font-size:11px; color:var(--muted); text-transform:uppercase; }
+.value { font-size:14px; color:inherit; word-break:break-all; }
+.dn { font-family:monospace; font-size:13px; }
+
+.meta { display:flex; align-items:center; gap:8px; }
+.mono { font-family:monospace; font-size:12px; color:var(--muted); }
+.copy-btn { padding:2px 6px; border-radius:6px; border:1px solid var(--hairline);
+  background:rgba(255,255,255,.04); color:var(--muted); cursor:pointer; font-size:10px;
+  &:hover { background:rgba(255,255,255,.08); }
+}
+
+.badges { display:flex; gap:6px; flex-wrap:wrap; }
+.chip { padding:4px 8px; border-radius:8px; font-size:11px; font-weight:600; text-transform:uppercase;
+  background:rgba(255,255,255,.08); color:var(--muted);
+  &.ca { background:rgba(88,199,250,.2); color:#58c7fa; }
+  &.revoked { background:rgba(255,99,132,.2); color:#ff6384; }
+  &.expired { background:rgba(255,193,7,.2); color:#ffc107; }
+}
+
+.valid { display:flex; flex-direction:column; gap:2px; align-items:flex-end; }
+.value.expired { color:#ff6384; }
+
+.actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+.empty { text-align:center; padding:60px 20px; }
+.no-certificates {
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  
+  h3 {
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  
+  p {
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  
+  a {
+    color: #58c7fa;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.loading { text-align:center; padding:40px; color:var(--muted); }

@@ -19,6 +19,13 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AdminCertificatesComponent } from './components/admin/admin-certificates/admin-certificates.component';
@@ -31,6 +38,8 @@ import { CaIssuersComponent } from './components/ca/ca-issuers/ca-issuers.compon
 import { CaShellComponent } from './components/ca/ca-shell/ca-shell.component';
 import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermediate/ca-issue-intermediate.component';
 import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
+import { CsrUploadComponent } from './components/csr-upload/csr-upload.component';
+import { MyCertificatesComponent } from './components/my-certificates/my-certificates.component';
 
 @NgModule({
   declarations: [
@@ -51,7 +60,9 @@ import { ActiveSessionsComponent } from './components/active-sessions/active-ses
     CaIssuersComponent,
     CaShellComponent,
     CaIssueIntermediateComponent,
-    ActiveSessionsComponent
+    ActiveSessionsComponent,
+    CsrUploadComponent,
+    MyCertificatesComponent
   ],
   imports: [
     BrowserModule,
@@ -62,12 +73,16 @@ import { ActiveSessionsComponent } from './components/active-sessions/active-ses
     CommonModule,
     RouterModule,
     MatPaginatorModule,
-    ReactiveFormsModule,
     MatSnackBarModule,
-    MatPaginatorModule,
     MatDialogModule,
-    FormsModule,
-    HttpClientModule
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCardModule,
+    FormsModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }

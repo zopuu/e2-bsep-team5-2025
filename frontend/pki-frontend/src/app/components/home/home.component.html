@@ -2,6 +2,23 @@
   <h2>Home</h2>
   <p>Uspešno si ulogovan.</p>
   
+  <div class="navigation-links">
+    <a routerLink="/csr-upload" class="nav-link">
+      <span class="nav-icon">📤</span>
+      <span>CSR Upload</span>
+    </a>
+    
+    <a routerLink="/active-sessions" class="nav-link">
+      <span class="nav-icon">📱</span>
+      <span>Active Sessions</span>
+    </a>
+    
+    <a routerLink="/my-certificates" class="nav-link">
+      <span class="nav-icon">📜</span>
+      <span>Moji Sertifikati</span>
+    </a>
+  </div>
+  
   <button (click)="logout()" class="logout-btn">Logout</button>
 </div>
 
