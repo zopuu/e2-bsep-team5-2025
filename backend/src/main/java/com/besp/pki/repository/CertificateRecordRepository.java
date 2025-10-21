@@ -1,5 +1,6 @@
 package com.besp.pki.repository;
 
+import com.besp.pki.dto.CaIssuerDto;
 import com.besp.pki.entity.CertificateEnums.CertificateStatus;
 import com.besp.pki.entity.CertificateRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,26 +24,32 @@ public interface CertificateRecordRepository extends
     long countByStatus(CertificateStatus status);
     // Active CA issuers owned by a given user (owner_user_id)
     @Query("""
-        select c from CertificateRecord c
-        where c.ca = true
-          and c.status = :status
-          and c.notBefore <= :now
-          and c.notAfter  >= :now
-          and c.owner.id = :ownerUserId
-        """)
-    List<CertificateRecord> findActiveCaIssuersByOwnerUserId(@Param("ownerUserId") Long ownerUserId,
-                                                             @Param("status") CertificateStatus status,
-                                                             @Param("now") Instant now);
+  select new com.besp.pki.dto.CaIssuerDto(
+    c.id, c.subjectDn, c.issuerDn, c.serialNumber, c.ca, c.notBefore, c.notAfter
+  )
+  from CertificateRecord c
+  where c.ca = true
+    and c.status = :status
+    and c.notBefore <= :now
+    and c.notAfter  >= :now
+    and c.owner.id  = :ownerUserId
+""")
+    List<CaIssuerDto> findActiveCaIssuerDtosByOwnerUserId(Long ownerUserId,
+                                                          CertificateStatus status,
+                                                          Instant now);
 
     @Query("""
-        select c from CertificateRecord c
-        where c.ca = true
-          and c.status = :status
-          and c.notBefore <= :now
-          and c.notAfter  >= :now
-          and c.owner.organization = :org
-        """)
-    List<CertificateRecord> findActiveCaIssuersByOwnerOrganization(@Param("org") String org,
-                                                                   @Param("status") CertificateStatus status,
-                                                                   @Param("now") Instant now);
+  select new com.besp.pki.dto.CaIssuerDto(
+    c.id, c.subjectDn, c.issuerDn, c.serialNumber, c.ca, c.notBefore, c.notAfter
+  )
+  from CertificateRecord c
+  where c.ca = true
+    and c.status = :status
+    and c.notBefore <= :now
+    and c.notAfter  >= :now
+    and c.owner.organization = :org
+""")
+    List<CaIssuerDto> findActiveCaIssuerDtosByOwnerOrganization(String org,
+                                                                CertificateStatus status,
+                                                                Instant now);
 }

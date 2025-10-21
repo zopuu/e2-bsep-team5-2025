@@ -347,21 +347,7 @@ public class CertificateService {
         var user = userOpt.get();
         var now = Instant.now();
 
-        // Prefer ownerUserId; if you rely on organization, use the org query
-        var records = repo.findActiveCaIssuersByOwnerUserId(user.getId(),
-                CertificateStatus.ACTIVE, now);
-
-        return records.stream()
-                .map(r -> new CaIssuerDto(
-                        r.getId(),
-                        r.getSubjectDn(),
-                        r.getIssuerDn(),
-                        r.getSerialNumber(),
-                        r.isCa(),
-                        r.getNotBefore(),
-                        r.getNotAfter()
-                ))
-                .toList();
+        return repo.findActiveCaIssuerDtosByOwnerUserId(user.getId(), CertificateStatus.ACTIVE, now);
     }
     /**
      * CA user issues an Intermediate CA from an issuer in *their* chain/scope.
