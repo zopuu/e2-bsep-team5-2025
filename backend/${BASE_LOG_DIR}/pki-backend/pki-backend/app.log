@@ -1,0 +1,5 @@
+[2025-10-21 16:09:20.730] | INFO  | com.besp.pki.PkiApplication | Starting PkiApplication using Java 21.0.5 with PID 25472 (C:\Users\Administrator\Desktop\BSEP\e2-bsep-team5-2025\backend\target\classes started by Administrator in C:\Users\Administrator\Desktop\BSEP\e2-bsep-team5-2025\backend)
+[2025-10-21 16:09:20.748] | INFO  | com.besp.pki.PkiApplication | No active profile set, falling back to 1 default profile: "default"
+[2025-10-21 16:09:24.839] | INFO  | com.besp.pki.PkiApplication | Starting PkiApplication using Java 21.0.5 with PID 29356 (C:\Users\Administrator\Desktop\BSEP\e2-bsep-team5-2025\backend\target\classes started by Administrator in C:\Users\Administrator\Desktop\BSEP\e2-bsep-team5-2025\backend)
+[2025-10-21 16:09:24.843] | INFO  | com.besp.pki.PkiApplication | No active profile set, falling back to 1 default profile: "default"
+[2025-10-21 16:09:29.745] | INFO  | com.besp.pki.PkiApplication | Started PkiApplication in 9.61 seconds (process running for 10.747)

@@ -34,8 +34,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegistrationRequest request) {
         try {
-            // Validate password confirmation
+            log.info("Registration attempt for email={}", request.getEmail());
+
             if (!request.getPassword().equals(request.getConfirmPassword())) {
+                log.warn("Registration failed (passwords do not match) for email={}", request.getEmail());
                 return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Passwords do not match"));
             }
@@ -48,16 +50,18 @@ public class AuthController {
                 request.getLastName(),
                 request.getOrganization()
             );
-            
+
+            log.info("Registration successful for email={}", request.getEmail());
             return ResponseEntity.ok(ApiResponse.success(
                 "Registration successful! Please check your email to activate your account."
             ));
             
         } catch (IllegalArgumentException e) {
+            log.warn("Registration rejected for email={} - {}", request.getEmail(), e.getMessage());
             return ResponseEntity.badRequest()
                 .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("Registration failed", e); // ispisuje ceo stack trace u konzoli
+            log.error("Registration failed for email={}", request.getEmail(), e);
             return ResponseEntity.internalServerError()
                     .body(ApiResponse.error("Registration failed. Please try again."));
         }
@@ -66,19 +70,25 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
+            log.info("Login attempt for email={}", request.getEmail());
+
             return userService.findByEmail(request.getEmail())
                 .filter(User::isEnabled)
                 .map(user -> {
                     if (!userService.passwordMatches(request.getPassword(), user.getPassword())) {
+                        log.warn("Login failed (invalid credentials) for email={}", request.getEmail());
                         return ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials"));
                     }
                     userService.updateLastLogin(user);
                     String role = user.getRole().name();
                     String token = jwtUtil.generateToken(user.getEmail(),role);
+                    log.info("User logged in successfully: email={}, role={}", user.getEmail(), role);
+
                     return ResponseEntity.ok(new LoginResponse(token, "Login successful"));
                 })
                 .orElseGet(() -> ResponseEntity.badRequest().body(ApiResponse.error("Invalid credentials")));
         } catch (Exception e) {
+            log.error("Login error for email={}", request.getEmail(), e);
             return ResponseEntity.internalServerError().body(ApiResponse.error("Login failed. Please try again."));
         }
     }
@@ -86,18 +96,23 @@ public class AuthController {
     @PostMapping("/activate")
     public ResponseEntity<ApiResponse> activateAccount(@RequestParam String token) {
         try {
+            String tokenPrefix = token != null && token.length() > 8 ? token.substring(0, 8) + "..." : "<none>";
+            log.info("Activation attempt token={}", tokenPrefix);
+
             boolean activated = userService.activateUser(token);
-            
             if (activated) {
+                log.info("Account activated successfully (tokenPrefix={})", tokenPrefix);
                 return ResponseEntity.ok(ApiResponse.success(
                     "Account activated successfully! You can now log in."
                 ));
             } else {
+                log.warn("Activation failed (invalid/expired token) tokenPrefix={}", tokenPrefix);
                 return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Invalid or expired activation token."));
             }
             
         } catch (Exception e) {
+            log.error("Activation error", e);
             return ResponseEntity.internalServerError()
                 .body(ApiResponse.error("Activation failed. Please try again."));
         }
@@ -106,15 +121,18 @@ public class AuthController {
     @PostMapping("/validate-password")
     public ResponseEntity<ApiResponse> validatePassword(@RequestBody String password) {
         try {
+            log.debug("Password validation request received");
             PasswordValidationService.PasswordStrengthResult result = 
                 passwordValidationService.validatePassword(password);
-            
+
+
             return ResponseEntity.ok(ApiResponse.success(
                 result.getMessage(),
                 result
             ));
             
         } catch (Exception e) {
+            log.error("Password validation failed", e);
             return ResponseEntity.internalServerError()
                 .body(ApiResponse.error("Password validation failed."));
         }

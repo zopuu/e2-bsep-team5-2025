@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="BASE_LOG_DIR">${sys:LOG_DIR:-logs}</Property>
+        <Property name="LOG_DIR">${BASE_LOG_DIR}/pki-backend</Property>
+
+        <Property name="PATTERN">[%d{yyyy-MM-dd HH:mm:ss.SSS}] | %-5level | %logger{36} | %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console">
+            <PatternLayout pattern="${PATTERN}"/>
+        </Console>
+
+        <RollingFile name="InfoFile"
+                     fileName="${LOG_DIR}/app.log"
+                     filePattern="${LOG_DIR}/app-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${PATTERN}"/>
+            <Filters>
+                <LevelRangeFilter minLevel="INFO" maxLevel="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="com.besp" level="INFO" additivity="false">
+            <AppenderRef ref="InfoFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>
