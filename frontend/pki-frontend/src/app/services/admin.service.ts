@@ -10,7 +10,8 @@ import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
-  private apiUrl = 'http://localhost:8080';
+  // private apiUrl = 'http://localhost:8080';
+  private apiUrl = 'https://localhost:8443';
 
   constructor(private http: HttpClient, private auth: AuthService) { }
 

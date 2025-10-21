@@ -16,7 +16,8 @@ export interface ActiveSession {
   providedIn: 'root'
 })
 export class TokenService {
-  private apiUrl = 'http://localhost:8080';
+  // private apiUrl = 'http://localhost:8080';
+  private apiUrl = 'https://localhost:8443';
 
   constructor(
     private http: HttpClient,

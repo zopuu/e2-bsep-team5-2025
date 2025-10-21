@@ -41,7 +41,8 @@ export interface CertificateResponse {
 
 @Injectable({ providedIn: 'root' })
 export class CaApiService {
-  private apiUrl = 'http://localhost:8080';
+  // private apiUrl = 'http://localhost:8080';
+  private apiUrl = 'https://localhost:8443';
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
