@@ -6,6 +6,7 @@ import { ActivationComponent } from './components/activation/activation.componen
 import { HomeComponent } from './components/home/home.component';
 import { AdminComponent } from './components/admin/admin.component';
 import { AdminGuard } from './guards/admin.guard';
+import { AuthGuard } from './guards/auth.guard';
 import { AdminCaComponent } from './components/admin/admin-ca/admin-ca.component';
 import { AdminIntermediateComponent } from './components/admin/admin-intermediate/admin-intermediate.component';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard/admin-dashboard.component';
@@ -22,6 +23,8 @@ import { ActiveSessionsComponent } from './components/active-sessions/active-ses
 import { CsrUploadComponent } from './components/csr-upload/csr-upload.component';
 import { MyCertificatesComponent } from './components/my-certificates/my-certificates.component';
 import { CaTemplatesComponent } from './components/ca/ca-templates/ca-templates.component';
+import { PasswordManagerComponent } from './components/password-manager/password-manager.component';
+import { AddPasswordComponent } from './components/add-password/add-password.component';
 
 const routes: Routes = [
 
@@ -47,10 +50,12 @@ const routes: Routes = [
   { path: 'register', component: RegistrationComponent },
   { path: 'login', component: LoginComponent },
   { path: 'activate', component: ActivationComponent },
-  { path: 'home', component: HomeComponent },
-  { path: 'active-sessions', component: ActiveSessionsComponent },
-  { path: 'csr-upload', component: CsrUploadComponent },
-  { path: 'my-certificates', component: MyCertificatesComponent },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'active-sessions', component: ActiveSessionsComponent, canActivate: [AuthGuard] },
+  { path: 'csr-upload', component: CsrUploadComponent, canActivate: [AuthGuard] },
+  { path: 'my-certificates', component: MyCertificatesComponent, canActivate: [AuthGuard] },
+  { path: 'password-manager', component: PasswordManagerComponent, canActivate: [AuthGuard] },
+  { path: 'add-password', component: AddPasswordComponent, canActivate: [AuthGuard] },
   { path: 'admin/ca', component: AdminCaComponent, canActivate: [AdminGuard] },
   { path: 'admin/ca/intermediate', component: AdminIntermediateComponent, canActivate: [AdminGuard] },
   { path: 'forgot-password', component: ForgotPasswordComponent },

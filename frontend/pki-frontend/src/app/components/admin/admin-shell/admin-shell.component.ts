@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-admin-shell',
@@ -11,6 +13,11 @@ export class AdminShellComponent {
   pendingCsrs = 3;             // TODO: wire to API
 
   title$ = new BehaviorSubject<string>('Admin');
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   onActivate(comp: any) {
     const t =
@@ -25,6 +32,12 @@ export class AdminShellComponent {
   openCmd() {
     alert('Command palette placeholder. Add quick actions here.');
   }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
   ngAfterViewInit() {
     document.querySelectorAll('aside nav a').forEach(a => {
       a.addEventListener('pointerdown', (ev: any) => {

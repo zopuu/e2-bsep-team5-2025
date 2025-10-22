@@ -262,6 +262,17 @@ nav a:active::after {
     background: var(--accent-600);
 }
 
+.btn.logout {
+    background: #dc3545;
+    border-color: #c82333;
+    color: #fff;
+}
+
+.btn.logout:hover {
+    background: #c82333;
+    border-color: #bd2130;
+}
+
 .content {
     padding: 18px;
     max-width: 1200px

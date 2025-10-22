@@ -78,6 +78,17 @@ nav a:active::after{ content:""; position:absolute; inset:0; border-radius:12px;
 .btn:hover{ background:#fff; border-color:#cfd7e3; box-shadow:0 4px 12px rgba(0,0,0,.06); transform:translateY(-1px) }
 .btn.primary{ background:var(--accent); border-color:var(--accent-600); color:#fff }
 .btn.primary:hover{ background:var(--accent-600) }
+
+.btn.logout {
+  background: #dc3545;
+  border-color: #c82333;
+  color: #fff;
+}
+
+.btn.logout:hover {
+  background: #c82333;
+  border-color: #bd2130;
+}
 .content{ padding:18px; max-width:1200px }
 .card{ background:var(--card); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:var(--shadow) }
 
