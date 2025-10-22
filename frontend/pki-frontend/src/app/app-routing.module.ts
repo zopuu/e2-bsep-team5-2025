@@ -22,6 +22,7 @@ import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermedi
 import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
 import { CsrUploadComponent } from './components/csr-upload/csr-upload.component';
 import { MyCertificatesComponent } from './components/my-certificates/my-certificates.component';
+import { CaTemplatesComponent } from './components/ca/ca-templates/ca-templates.component';
 import { PasswordManagerComponent } from './components/password-manager/password-manager.component';
 import { AddPasswordComponent } from './components/add-password/add-password.component';
 
@@ -66,7 +67,8 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'issuers', pathMatch: 'full' },
       { path: 'issuers', component: CaIssuersComponent },
-      { path: 'issue-intermediate', component: CaIssueIntermediateComponent}
+      { path: 'issue-intermediate', component: CaIssueIntermediateComponent},
+      { path: 'templates', component: CaTemplatesComponent }
     ]
   },
   { path: '**', redirectTo: '/register' },

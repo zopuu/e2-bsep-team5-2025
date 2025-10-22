@@ -1,0 +1,106 @@
+<div class="ct-wrap">
+  <h2>CA Templates</h2>
+
+  <div class="ct-grid">
+    <!-- Create form -->
+    <form [formGroup]="form" (ngSubmit)="createTemplate()" class="card">
+      <h3>Create template</h3>
+
+      <label>
+        <span>Template name</span>
+        <input formControlName="name" type="text" placeholder="e.g. Web Server Template" />
+        <small *ngIf="form.get('name')?.touched && form.get('name')?.invalid">
+          Required, max 120
+        </small>
+      </label>
+
+      <label>
+        <span>CA issuer</span>
+        <select formControlName="issuerCertificateId">
+          <option [ngValue]="null" disabled>Select issuer...</option>
+          <option *ngFor="let ca of issuers()" [value]="ca.id">
+            {{ ca.commonName }} (ID: {{ ca.id }})
+          </option>
+        </select>
+        <small
+          *ngIf="form.get('issuerCertificateId')?.touched && form.get('issuerCertificateId')?.invalid"
+          >Required</small
+        >
+      </label>
+
+      <div class="row-2">
+        <label>
+          <span>CN regex</span>
+          <input formControlName="cnRegex" type="text" placeholder="^.*\.ftn\.com$" />
+          <small *ngIf="form.get('cnRegex')?.touched && form.get('cnRegex')?.invalid">
+            Valid regex required
+          </small>
+        </label>
+
+        <label>
+          <span>SAN regex</span>
+          <input formControlName="sanRegex" type="text" placeholder="^.*\.ftn\.com$" />
+          <small *ngIf="form.get('sanRegex')?.touched && form.get('sanRegex')?.invalid">
+            Valid regex required
+          </small>
+        </label>
+      </div>
+
+      <label>
+        <span>TTL (days)</span>
+        <input formControlName="ttlDays" type="number" min="1" max="3650" />
+        <small *ngIf="form.get('ttlDays')?.touched && form.get('ttlDays')?.invalid">1–3650</small>
+      </label>
+
+      <fieldset>
+        <legend>Key Usage</legend>
+        <div class="checks">
+          <label *ngFor="let ctrl of keyUsagesFA.controls; let i = index">
+            <input type="checkbox" [formControl]="ctrl" />
+            <span>{{ keyUsageOptions[i] }}</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Extended Key Usage</legend>
+        <div class="checks">
+          <label *ngFor="let ctrl of ekusFA.controls; let i = index">
+            <input type="checkbox" [formControl]="ctrl" />
+            <span>{{ ekuOptions[i] }}</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <button type="submit" [disabled]="form.invalid">Save template</button>
+
+      <p class="msg error" *ngIf="errorMsg()">{{ errorMsg() }}</p>
+      <p class="msg ok" *ngIf="successMsg()">{{ successMsg() }}</p>
+    </form>
+
+    <!-- Templates list -->
+    <div class="card">
+      <h3>Existing templates</h3>
+      <div *ngIf="loading()">Loading…</div>
+      <div *ngIf="!loading() && templates().length === 0">No templates yet.</div>
+
+      <ul class="list" *ngIf="templates().length">
+        <li *ngFor="let t of templates()">
+          <div class="row">
+            <div>
+              <b>{{ t.name }}</b>
+              <div class="meta">Issuer ID: {{ t.issuerCertificateId }} • TTL: {{ t.ttlDays }}d</div>
+              <div class="meta">CN: <code>{{ t.cnRegex }}</code></div>
+              <div class="meta">SAN: <code>{{ t.sanRegex }}</code></div>
+              <div class="meta">KU: {{ t.keyUsages.join(', ') || '—' }}</div>
+              <div class="meta">EKU: {{ t.extendedKeyUsages.join(', ') || '—' }}</div>
+            </div>
+            <div>
+              <button class="danger" (click)="deleteTemplate(t.id)">Delete</button>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

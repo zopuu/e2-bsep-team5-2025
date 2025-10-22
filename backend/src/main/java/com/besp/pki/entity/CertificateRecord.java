@@ -137,4 +137,8 @@ public class CertificateRecord {
     void preUpdate() {
         updatedAt = Instant.now();
     }
+
+    public long getId() {
+        return this.id;
+    }
 }
