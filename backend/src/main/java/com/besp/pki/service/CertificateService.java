@@ -2,9 +2,11 @@ package com.besp.pki.service;
 
 import static com.besp.pki.x509.X509CaUtils.*;
 
+import com.besp.pki.crl.CrlService;
 import com.besp.pki.dto.*;
 import com.besp.pki.entity.CertificateEnums.RevocationReason;
 import com.besp.pki.mapper.CertificateMappers;
+import com.besp.pki.ocsp.OcspService;
 import  com.besp.pki.x509.X500Util;
 import static com.besp.pki.x509.PemUtil.*;
 
@@ -52,14 +54,20 @@ public class CertificateService {
     private final UserService userService;
     private final CryptoSealService seal;
     private final KeyStoreService ks;
+    private final CrlService crlService;
+    private final OcspService ocspService;
 
     @Value("${pki.keystore-dir:./data/keystores}")
     private String keystoreDir;
 
     private static final SecureRandom RNG = new SecureRandom();
 
-    public CertificateService(CertificateRecordRepository repo, CryptoSealService seal, KeyStoreService ks, UserService userService) {
+    public CertificateService(CertificateRecordRepository repo, CryptoSealService seal, KeyStoreService ks,
+                              UserService userService,
+                              CrlService crlService,
+                              OcspService ocspService) {
         this.repo = repo; this.seal = seal; this.ks = ks ; this.userService = userService;
+        this.crlService = crlService; this.ocspService = ocspService;
     }
 
     public List<CertificateRecord> findAll() { return repo.findAll(); }
@@ -338,6 +346,14 @@ public class CertificateService {
         // optional audit breadcrumb
         String by = (revokedBy == null ? "admin" : revokedBy);
         rec.setCreatedBy((rec.getCreatedBy() == null ? "" : rec.getCreatedBy()) + " | revoked by " + by);
+
+        Long issuerId = rec.getIssuer() != null ? rec.getIssuer().getId() : rec.getId(); // root je sam sebi issuer
+        try {
+            crlService.rebuild(issuerId);
+        } catch (Exception e) { /* log.warn("CRL rebuild failed", e); */ }
+        try {
+            ocspService.invalidate(issuerId, rec.getSerialNumber());
+        } catch (Exception e) { /* log.warn("OCSP invalidate failed", e); */ }
 
         repo.save(rec);
     }

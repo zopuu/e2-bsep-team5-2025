@@ -52,4 +52,6 @@ public interface CertificateRecordRepository extends
     List<CaIssuerDto> findActiveCaIssuerDtosByOwnerOrganization(String org,
                                                                 CertificateStatus status,
                                                                 Instant now);
+    List<CertificateRecord> findByIssuer_IdAndStatus(Long issuerId, CertificateStatus status);
+    Optional<CertificateRecord> findBySerialNumberIgnoreCase(String serialHex);
 }
