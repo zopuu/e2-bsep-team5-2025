@@ -40,6 +40,8 @@ import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermedi
 import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
 import { CsrUploadComponent } from './components/csr-upload/csr-upload.component';
 import { MyCertificatesComponent } from './components/my-certificates/my-certificates.component';
+import { PasswordManagerComponent } from './components/password-manager/password-manager.component';
+import { AddPasswordComponent } from './components/add-password/add-password.component';
 
 @NgModule({
   declarations: [
@@ -62,7 +64,9 @@ import { MyCertificatesComponent } from './components/my-certificates/my-certifi
     CaIssueIntermediateComponent,
     ActiveSessionsComponent,
     CsrUploadComponent,
-    MyCertificatesComponent
+    MyCertificatesComponent,
+    PasswordManagerComponent,
+    AddPasswordComponent
   ],
   imports: [
     BrowserModule,

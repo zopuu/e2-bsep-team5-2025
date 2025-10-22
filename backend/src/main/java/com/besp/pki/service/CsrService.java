@@ -7,14 +7,24 @@ import com.besp.pki.entity.CertificateEnums.CertificateType;
 import com.besp.pki.repository.CertificateRecordRepository;
 import com.besp.pki.repository.UserRepository;
 import com.besp.pki.x509.CsrParser;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
+import java.math.BigInteger;
+import java.security.*;
+import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -186,7 +196,7 @@ public class CsrService {
         cert.setNotBefore(now);
         cert.setNotAfter(now.plus(request.getValidityDays(), ChronoUnit.DAYS));
         
-        // Set fingerprint
+        // Set fingerprint (will be updated with real certificate)
         cert.setFingerprintSha256("ee-fingerprint-" + System.currentTimeMillis());
         
         // Set signature algorithm
@@ -226,8 +236,8 @@ public class CsrService {
             String pemFileName = alias + ".pem";
             String pemFilePath = keystoreDir + "/" + pemFileName;
             
-            // Create mock PEM content for now
-            String pemContent = createMockPemContent(cert);
+            // Create real X.509 certificate
+            String pemContent = createRealX509Certificate(request, caCert);
             
             // Write PEM file to keystores directory
             java.nio.file.Files.createDirectories(java.nio.file.Path.of(keystoreDir));
@@ -241,6 +251,14 @@ public class CsrService {
             // Store PEM content in database as well
             cert.setCertificatePem(pemContent);
             
+            // Update fingerprint with real certificate fingerprint
+            try {
+                X509Certificate realCert = parseCertificateFromPem(pemContent);
+                cert.setFingerprintSha256(calculateFingerprint(realCert));
+            } catch (Exception e) {
+                log.warn("Could not calculate real fingerprint: {}", e.getMessage());
+            }
+            
             log.info("Created EE certificate as PEM file: {}", pemFilePath);
             
         } catch (Exception e) {
@@ -252,21 +270,175 @@ public class CsrService {
     }
     
     
-    private String createMockPemContent(CertificateRecord cert) {
+    private String createRealX509Certificate(CertificateIssueRequest request, CertificateRecord caCert) throws Exception {
+        try {
+            // Get CA private key and certificate
+            char[] caPass = cryptoSealService.unseal(caCert.getEncKeystorePass()).toCharArray();
+            PrivateKey caPrivateKey = keyStoreService.readPrivateKey(caCert.getKeystorePath(), caCert.getKeystoreAlias(), caPass);
+            X509Certificate caCertificate = keyStoreService.readCertificate(caCert.getKeystorePath(), caCert.getKeystoreAlias(), caPass);
+            
+            // Extract public key from CSR
+            CsrData csrData = request.getCsrData();
+            PublicKey subjectPublicKey = extractPublicKeyFromCsr(csrData.getPublicKeyPem());
+            
+            // Build subject DN from CSR data
+            X500Name subjectDN = buildSubjectDN(csrData);
+            X500Name issuerDN = X500Name.getInstance(caCertificate.getSubjectX500Principal().getEncoded());
+            
+            // Generate serial number
+            BigInteger serial = BigInteger.valueOf(System.currentTimeMillis());
+            
+            // Set validity period
+            Instant now = Instant.now();
+            Date notBefore = Date.from(now);
+            Date notAfter = Date.from(now.plus(request.getValidityDays(), ChronoUnit.DAYS));
+            
+            // Create certificate builder
+            JcaX509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+                issuerDN, serial, notBefore, notAfter, subjectDN, subjectPublicKey);
+            
+            // Add extensions
+            JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
+            builder.addExtension(org.bouncycastle.asn1.x509.Extension.subjectKeyIdentifier, false,
+                extUtils.createSubjectKeyIdentifier(subjectPublicKey));
+            builder.addExtension(org.bouncycastle.asn1.x509.Extension.authorityKeyIdentifier, false,
+                extUtils.createAuthorityKeyIdentifier(caCertificate));
+            
+            // Add Key Usage extension
+            builder.addExtension(org.bouncycastle.asn1.x509.Extension.keyUsage, false,
+                new org.bouncycastle.asn1.x509.KeyUsage(
+                    org.bouncycastle.asn1.x509.KeyUsage.digitalSignature |
+                    org.bouncycastle.asn1.x509.KeyUsage.keyEncipherment));
+            
+            // Create content signer
+            ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA")
+                .setProvider("BC")
+                .build(caPrivateKey);
+            
+            // Build and convert certificate
+            X509Certificate certificate = new JcaX509CertificateConverter()
+                .setProvider("BC")
+                .getCertificate(builder.build(signer));
+            
+            // Verify certificate
+            certificate.verify(caCertificate.getPublicKey());
+            
+            // Convert to PEM format
+            return com.besp.pki.x509.PemUtil.toPem(certificate);
+            
+        } catch (Exception e) {
+            log.error("Failed to create real X.509 certificate: {}", e.getMessage(), e);
+            throw new Exception("Failed to create certificate: " + e.getMessage(), e);
+        }
+    }
+    
+    private PublicKey extractPublicKeyFromCsr(String publicKeyPem) throws Exception {
+        try {
+            // Remove PEM headers and decode base64
+            String base64Content = publicKeyPem
+                .replaceAll("-----BEGIN PUBLIC KEY-----", "")
+                .replaceAll("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s", "");
+            
+            byte[] keyBytes = java.util.Base64.getDecoder().decode(base64Content);
+            java.security.spec.X509EncodedKeySpec spec = new java.security.spec.X509EncodedKeySpec(keyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return keyFactory.generatePublic(spec);
+            
+        } catch (Exception e) {
+            throw new Exception("Failed to extract public key from CSR: " + e.getMessage(), e);
+        }
+    }
+    
+    private X500Name buildSubjectDN(CsrData csrData) {
+        StringBuilder dn = new StringBuilder();
+        
+        if (csrData.getCommonName() != null) {
+            dn.append("CN=").append(csrData.getCommonName());
+        }
+        if (csrData.getOrganization() != null) {
+            if (dn.length() > 0) dn.append(",");
+            dn.append("O=").append(csrData.getOrganization());
+        }
+        if (csrData.getOrganizationalUnit() != null) {
+            if (dn.length() > 0) dn.append(",");
+            dn.append("OU=").append(csrData.getOrganizationalUnit());
+        }
+        if (csrData.getLocality() != null) {
+            if (dn.length() > 0) dn.append(",");
+            dn.append("L=").append(csrData.getLocality());
+        }
+        if (csrData.getState() != null) {
+            if (dn.length() > 0) dn.append(",");
+            dn.append("ST=").append(csrData.getState());
+        }
+        if (csrData.getCountry() != null) {
+            if (dn.length() > 0) dn.append(",");
+            dn.append("C=").append(csrData.getCountry());
+        }
+        if (csrData.getEmailAddress() != null) {
+            if (dn.length() > 0) dn.append(",");
+            dn.append("EMAILADDRESS=").append(csrData.getEmailAddress());
+        }
+        
+        return new X500Name(dn.toString());
+    }
+    
+    private String convertCertificateToPem(X509Certificate certificate) throws Exception {
+        try {
+            byte[] certBytes = certificate.getEncoded();
+            String base64 = java.util.Base64.getEncoder().encodeToString(certBytes);
+            
         StringBuilder pem = new StringBuilder();
         pem.append("-----BEGIN CERTIFICATE-----\n");
-        pem.append("MOCK EE CERTIFICATE\n");
-        pem.append("Serial Number: ").append(cert.getSerialNumber()).append("\n");
-        pem.append("Subject: ").append(cert.getSubjectDn()).append("\n");
-        pem.append("Issuer: ").append(cert.getIssuerDn()).append("\n");
-        pem.append("Not Before: ").append(cert.getNotBefore()).append("\n");
-        pem.append("Not After: ").append(cert.getNotAfter()).append("\n");
-        pem.append("Key Algorithm: ").append(cert.getPublicKeyAlgorithm()).append("\n");
-        pem.append("Key Size: ").append(cert.getKeySize()).append("\n");
-        pem.append("Signature Algorithm: ").append(cert.getSignatureAlgorithm()).append("\n");
-        pem.append("Fingerprint: ").append(cert.getFingerprintSha256()).append("\n");
+            
+            // Split base64 into 64-character lines
+            for (int i = 0; i < base64.length(); i += 64) {
+                int end = Math.min(i + 64, base64.length());
+                pem.append(base64.substring(i, end)).append("\n");
+            }
+            
         pem.append("-----END CERTIFICATE-----\n");
         return pem.toString();
+            
+        } catch (Exception e) {
+            throw new Exception("Failed to convert certificate to PEM: " + e.getMessage(), e);
+        }
+    }
+    
+    private X509Certificate parseCertificateFromPem(String pemContent) throws Exception {
+        try {
+            // Remove PEM headers and decode base64
+            String base64Content = pemContent
+                .replaceAll("-----BEGIN CERTIFICATE-----", "")
+                .replaceAll("-----END CERTIFICATE-----", "")
+                .replaceAll("\\s", "");
+            
+            byte[] certBytes = java.util.Base64.getDecoder().decode(base64Content);
+            java.security.cert.CertificateFactory factory = java.security.cert.CertificateFactory.getInstance("X.509");
+            return (X509Certificate) factory.generateCertificate(new java.io.ByteArrayInputStream(certBytes));
+            
+        } catch (Exception e) {
+            throw new Exception("Failed to parse certificate from PEM: " + e.getMessage(), e);
+        }
+    }
+    
+    private String calculateFingerprint(X509Certificate certificate) throws Exception {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(certificate.getEncoded());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new Exception("Failed to calculate fingerprint: " + e.getMessage(), e);
+        }
     }
     
     private String generateRandomPassword(int length) {
