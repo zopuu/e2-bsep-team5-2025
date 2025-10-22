@@ -21,6 +21,7 @@ import { CaIssueIntermediateComponent } from './components/ca/ca-issue-intermedi
 import { ActiveSessionsComponent } from './components/active-sessions/active-sessions.component';
 import { CsrUploadComponent } from './components/csr-upload/csr-upload.component';
 import { MyCertificatesComponent } from './components/my-certificates/my-certificates.component';
+import { CaTemplatesComponent } from './components/ca/ca-templates/ca-templates.component';
 
 const routes: Routes = [
 
@@ -61,7 +62,8 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'issuers', pathMatch: 'full' },
       { path: 'issuers', component: CaIssuersComponent },
-      { path: 'issue-intermediate', component: CaIssueIntermediateComponent}
+      { path: 'issue-intermediate', component: CaIssueIntermediateComponent},
+      { path: 'templates', component: CaTemplatesComponent }
     ]
   },
   { path: '**', redirectTo: '/register' },
